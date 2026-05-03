@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MISS — Process Flow</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gm-blue:#0033A0;--gm-dark:#122C6C;--gm-light:#D6E5FB;--gm-lightest:#F0F5FF;
+  --black:#222;--dgray:#555;--gray:#999;--lgray:#DDD;--xlgray:#F5F5F5;
+  --green:#39B54A;--lgreen:#E8F5E9;--red:#D32F2F;--lred:#FFEBEE;
+  --yellow:#F9A825;--lyellow:#FFF8E1;--orange:#F57F20;
+}
+body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);
+  background:var(--xlgray);min-height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* Header */
+.hdr{background:var(--gm-blue);color:white;display:flex;align-items:center;
+  padding:0 16px;height:52px;flex-shrink:0;gap:12px;box-shadow:0 2px 6px rgba(0,0,0,.25);z-index:200}
+.hdr-logo{background:white;color:var(--gm-blue);font-weight:900;font-size:13px;padding:3px 8px;border-radius:2px}
+.hdr-title{font-size:14px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:1px}
+.hdr-links{margin-left:auto;display:flex;gap:8px}
+.hdr-link{color:rgba(255,255,255,.85);font-size:12px;font-weight:700;text-decoration:none;
+  padding:5px 10px;border:1px solid rgba(255,255,255,.3);border-radius:2px}
+.hdr-link:hover{background:rgba(255,255,255,.15)}
+
+/* Login */
+.login-wrap{flex:1;display:flex;align-items:center;justify-content:center}
+.login-box{background:white;border-radius:4px;padding:32px 36px;width:320px;
+  box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.login-title{font-size:16px;font-weight:800;color:var(--gm-blue);margin-bottom:20px;
+  text-align:center;text-transform:uppercase;letter-spacing:.05em}
+.login-err{background:var(--lred);color:var(--red);font-size:12px;font-weight:700;
+  padding:7px 10px;border-radius:2px;margin-bottom:12px;display:none}
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:11px;font-weight:800;color:var(--dgray);
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.fld input{width:100%;border:1.5px solid var(--lgray);border-radius:2px;
+  padding:8px 10px;font-size:13px;font-family:Arial}
+.fld input:focus{outline:none;border-color:var(--gm-blue)}
+.btn-login{width:100%;background:var(--gm-blue);color:white;border:none;
+  padding:10px;border-radius:2px;font-size:13px;font-weight:800;cursor:pointer;
+  text-transform:uppercase;letter-spacing:.06em}
+.btn-login:hover{background:var(--gm-dark)}
+
+/* Tab bar */
+.tab-bar{background:white;border-bottom:2px solid var(--lgray);display:flex;
+  align-items:stretch;flex-shrink:0;position:sticky;top:52px;z-index:199}
+.tab-btn{padding:11px 24px;font-size:13px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.05em;cursor:pointer;border:none;background:none;color:var(--dgray);
+  border-bottom:3px solid transparent;transition:all .15s}
+.tab-btn:hover{color:var(--gm-blue);background:var(--gm-lightest)}
+.tab-btn.active{color:var(--gm-blue);border-bottom:3px solid var(--gm-blue)}
+
+/* Tab contents */
+.tab-content{display:none;overflow:hidden;flex-direction:column}
+.tab-content.active{display:flex;flex:1;height:calc(100vh - 52px - 46px)}
+
+/* Flow editor */
+.flow-wrap{display:flex;flex:1;overflow:hidden}
+.toolbar{background:white;border-bottom:1px solid var(--lgray);padding:8px 16px;
+  display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.toolbar-label{font-size:11px;font-weight:800;color:var(--dgray);
+  text-transform:uppercase;letter-spacing:.05em}
+.fp-node{padding:6px 14px;border-radius:3px;cursor:grab;font-size:12px;font-weight:700;
+  border:2px solid;user-select:none;transition:transform .1s,box-shadow .1s}
+.fp-node:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(0,0,0,.15)}
+.fp-node:active{cursor:grabbing}
+.fp-op{background:#e3f0ff;border-color:var(--gm-blue);color:var(--gm-blue)}
+.fp-buf{background:#fff8e1;border-color:#d97706;color:#7c5700}
+.fp-out{background:#dcfce7;border-color:#16a34a;color:#14532d}
+.sep{width:1px;height:24px;background:var(--lgray);margin:0 4px}
+.btn{padding:6px 14px;border-radius:2px;font-size:12px;font-weight:700;cursor:pointer;
+  border:1.5px solid;text-transform:uppercase;letter-spacing:.04em}
+.btn-outline{background:white;color:var(--dgray);border-color:var(--lgray)}
+.btn-outline:hover{background:var(--xlgray)}
+.btn-danger-sm{background:var(--lred);color:var(--red);border-color:var(--red)}
+.btn-save{background:var(--gm-blue);color:white;border-color:var(--gm-blue)}
+.btn-save:hover{background:var(--gm-dark)}
+.dirty-msg{font-size:11px;color:var(--orange);font-weight:700}
+.hint{font-size:10px;color:var(--gray);margin-left:auto}
+
+/* Canvas */
+.canvas-wrap{flex:1;position:relative;overflow:hidden;background:#f8faff;cursor:default}
+#fpCanvas{position:absolute;top:0;left:0}
+
+/* Right panel */
+.panel{width:270px;flex-shrink:0;background:white;border-left:2px solid var(--lgray);
+  display:flex;flex-direction:column;overflow:hidden}
+.panel-hdr{background:#f0f4ff;padding:10px 14px;font-size:11px;font-weight:800;
+  color:var(--gm-blue);text-transform:uppercase;letter-spacing:.05em;
+  border-bottom:1px solid var(--lgray);flex-shrink:0}
+.panel-body{padding:12px 14px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.panel-empty{font-size:12px;color:var(--gray);text-align:center;padding:32px 0;line-height:1.7}
+.field{display:flex;flex-direction:column;gap:3px}
+.field-label{font-size:10px;font-weight:700;color:var(--dgray);
+  text-transform:uppercase;letter-spacing:.06em}
+.field input,.field textarea{border:1.5px solid var(--lgray);border-radius:2px;
+  padding:6px 8px;font-size:12px;font-family:Arial;width:100%}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--gm-blue)}
+.field input[readonly]{background:var(--xlgray);color:var(--dgray);cursor:not-allowed}
+.field textarea{height:60px;resize:vertical}
+.machines-list{max-height:220px;overflow-y:auto;background:var(--xlgray);
+  border:1px solid var(--lgray);border-radius:2px;padding:6px;
+  display:flex;flex-direction:column;gap:3px}
+.machine-item{display:flex;align-items:center;gap:6px;font-size:11px;
+  color:var(--black);padding:2px 0;cursor:pointer}
+.machine-item.disabled{color:var(--lgray);cursor:not-allowed}
+.machine-item input{accent-color:var(--gm-blue);width:13px;height:13px;flex-shrink:0}
+.panel-actions{display:flex;flex-direction:column;gap:6px;padding-top:6px;
+  border-top:1px solid var(--lgray);margin-top:6px}
+
+/* Status bar */
+.statusbar{background:#f0f4ff;border-top:1px solid var(--lgray);padding:5px 16px;
+  font-size:11px;color:var(--gray);display:flex;gap:16px;flex-shrink:0}
+
+/* Audit tab */
+.audit-wrap{padding:16px 20px;flex:1;overflow-y:auto}
+.audit-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.audit-card{background:white;border:1px solid var(--lgray);border-radius:3px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);overflow-x:auto}
+.audit-card-hdr{background:var(--gm-blue);color:white;padding:10px 16px;
+  font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.audit-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+.audit-table th{background:#f0f4ff;color:var(--gm-dark);padding:8px 10px;
+  text-align:left;font-size:11px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.04em;border-bottom:2px solid var(--gm-light)}
+.audit-table td{padding:7px 10px;border-bottom:1px solid var(--xlgray);
+  vertical-align:top;word-wrap:break-word;overflow-wrap:break-word}
+.audit-table tr:hover td{background:var(--gm-lightest)}
+.change-list{margin:0;padding-left:14px;font-size:11px;color:var(--dgray)}
+.change-list li{margin-bottom:2px}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase}
+.badge-tab{background:var(--gm-lightest);color:var(--gm-blue);border:1px solid var(--gm-light)}
+.badge-restore{background:var(--lyellow);color:#7a4f00;border:1px solid var(--yellow)}
+.btn-restore{padding:4px 10px;font-size:11px;font-weight:700;border-radius:2px;
+  cursor:pointer;border:1px solid var(--lgray);background:white;color:var(--dgray)}
+.btn-restore:hover{background:var(--xlgray)}
+
+/* Dialogs */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);
+  z-index:500;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.dialog{background:white;border-radius:4px;padding:24px 28px;width:400px;
+  box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.dialog-title{font-size:15px;font-weight:800;color:var(--gm-blue);
+  margin-bottom:16px;text-transform:uppercase;letter-spacing:.04em}
+.dialog label{display:block;font-size:11px;font-weight:700;color:var(--dgray);
+  text-transform:uppercase;margin-bottom:3px;margin-top:10px}
+.dialog input,.dialog textarea{width:100%;border:1.5px solid var(--lgray);
+  border-radius:2px;padding:7px 9px;font-size:13px;font-family:Arial}
+.dialog textarea{height:70px;resize:vertical}
+.dialog-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+
+/* Toast */
+.toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);
+  background:var(--gm-blue);color:white;padding:9px 22px;border-radius:20px;
+  font-size:13px;font-weight:700;opacity:0;transition:opacity .3s;
+  pointer-events:none;z-index:1000;white-space:nowrap}
+.toast.show{opacity:1}
+.toast.err{background:var(--red)}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-logo">GM</div>
+  <div>
+    <div class="hdr-title">MISS — Process Flow</div>
+    <div class="hdr-sub" id="hdrSub">Manufacturing Intelligence System</div>
+  </div>
+  <div class="hdr-links">
+    <a href="/config" class="hdr-link">&#8592; Config</a>
+    <a href="/dashboard" class="hdr-link">Dashboard</a>
+    <a href="/api/health" class="hdr-link">Health</a>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="login-title">Flow Screen</div>
+    <div class="login-err" id="loginErr">Invalid username or password</div>
+    <div class="fld"><label>Username</label><input type="text" id="loginUser" placeholder="admin"></div>
+    <div class="fld"><label>Password</label>
+      <input type="password" id="loginPass" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-login" onclick="doLogin()">Login</button>
+  </div>
+</div>
+
+<!-- MAIN UI (hidden until logged in) -->
+<div id="mainWrap" style="display:none;flex:1;flex-direction:column;overflow:hidden;height:calc(100vh - 52px)">
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('flow',this)">1. Process Flow</button>
+    <button class="tab-btn" onclick="switchTab('audit',this)">2. Backup Log</button>
+  </div>
+
+  <!-- Tab 1: Process Flow Editor -->
+  <div class="tab-content active" id="tab-flow">
+    <div class="toolbar" style="flex-shrink:0">
+      <span class="toolbar-label">Add:</span>
+      <div class="fp-node fp-op" draggable="true" ondragstart="fpDragStart(event,'operation')">⚙ Operation</div>
+      <div class="fp-node fp-buf" draggable="true" ondragstart="fpDragStart(event,'buffer')">▣ Buffer</div>
+      <div class="fp-node fp-out" draggable="true" ondragstart="fpDragStart(event,'output')">✓ Output</div>
+      <div class="sep"></div>
+      <button class="btn btn-outline" onclick="fpZoomFit()">Fit View</button>
+      <button class="btn btn-danger-sm" id="fpDeleteBtn" style="display:none" onclick="fpDeleteSelected()">Delete Node</button>
+      <span class="dirty-msg" id="fpDirtyMsg" style="display:none">● Unsaved changes</span>
+      <span class="hint">Drag nodes · Drag right port edge → connect · Click connection to delete · Scroll=zoom · Drag=pan</span>
+      <div class="sep"></div>
+      <button class="btn btn-save" onclick="promptSave()">Save Flow</button>
+    </div>
+    <div class="flow-wrap" style="flex:1;min-height:0">
+      <div class="canvas-wrap" id="fpCanvasWrap" style="min-height:0"
+        ondragover="event.preventDefault()"
+        ondrop="fpCanvasDrop(event)"
+        onmousedown="fpMouseDown(event)"
+        onmousemove="fpMouseMove(event)"
+        onmouseup="fpMouseUp(event)"
+        onwheel="fpWheel(event)">
+        <canvas id="fpCanvas"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-hdr">Node Properties</div>
+        <div class="panel-body">
+          <div class="panel-empty" id="fpPanelEmpty">
+            Click a node to edit its properties.<br><br>
+            Drag nodes from toolbar onto canvas.<br>
+            Connect by dragging the right port edge.
+          </div>
+          <div id="fpPanelForm" style="display:none;flex-direction:column;gap:8px">
+            <div class="field">
+              <div class="field-label">Node ID</div>
+              <input type="text" id="fpId" readonly>
+            </div>
+            <div class="field">
+              <div class="field-label">Label</div>
+              <input type="text" id="fpLabel" oninput="fpUpdateNode('label',this.value)">
+            </div>
+            <div class="field">
+              <div class="field-label">Note / Description</div>
+              <textarea id="fpNote" oninput="fpUpdateNode('note',this.value)"></textarea>
+            </div>
+            <div id="fpMachinesSection" style="display:none">
+              <div class="field-label" style="margin-bottom:4px">Assigned Machines</div>
+              <div class="machines-list" id="fpMachinesList"></div>
+            </div>
+            <div class="panel-actions">
+              <button class="btn btn-danger-sm" onclick="fpDeleteSelected()">Delete This Node</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="statusbar" style="flex-shrink:0">
+      <span id="fpStatus">Connecting...</span>
+      <span id="fpNodeCount">0 nodes</span>
+      <span id="fpConnCount">0 connections</span>
+    </div>
+  </div>
+
+  <!-- Tab 2: Backup Log -->
+  <div class="tab-content" id="tab-audit">
+    <div class="audit-wrap">
+      <div class="audit-toolbar">
+        <button class="btn btn-outline" onclick="loadAuditLog()">&#8635; Refresh</button>
+        <span style="font-size:12px;color:var(--dgray);font-weight:600">
+          Full history of all config changes. Click Restore to roll back to any version.
+        </span>
+      </div>
+      <div class="audit-card">
+        <div class="audit-card-hdr">Config Change History</div>
+        <div style="overflow-x:auto">
+          <table class="audit-table" id="auditTable">
+            <thead><tr>
+              <th style="width:140px">Date / Time</th>
+              <th style="width:130px">Changed By</th>
+              <th style="width:80px">Tab</th>
+              <th style="width:auto">What Changed</th>
+              <th style="width:180px">Comment</th>
+              <th style="width:80px">Action</th>
+            </tr></thead>
+            <tbody id="auditRows">
+              <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--dgray)">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Save Dialog -->
+<div class="overlay" id="saveOverlay">
+  <div class="dialog">
+    <div class="dialog-title">Save Process Flow</div>
+    <label>Your Name</label>
+    <input type="text" id="saveUser" placeholder="Enter your name">
+    <label>Comment (optional)</label>
+    <textarea id="saveComment" placeholder="What did you change?"></textarea>
+    <div class="dialog-btns">
+      <button class="btn btn-outline" onclick="document.getElementById('saveOverlay').classList.remove('show')">Cancel</button>
+      <button class="btn btn-save" onclick="confirmSave()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Dialog -->
+<div class="overlay" id="restoreOverlay">
+  <div class="dialog">
+    <div class="dialog-title">Restore Configuration</div>
+    <div id="restoreInfo" style="font-size:13px;color:var(--dgray);margin-bottom:12px"></div>
+    <label>Your Name</label>
+    <input type="text" id="restoreUser" placeholder="Enter your name">
+    <div class="dialog-btns">
+      <button class="btn btn-outline" onclick="document.getElementById('restoreOverlay').classList.remove('show')">Cancel</button>
+      <button class="btn btn-danger-sm" onclick="confirmRestore()">Restore This Version</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+const FP_W = 160, FP_H = 68;
+
+let cfg = null;
+let sessionPassword = '';
+let fp = {nodes:[], connections:[]};
+let fpZoom = 1, fpPan = {x:60,y:40};
+let fpSelected = null, fpDragging = null, fpDragOff = {x:0,y:0};
+let fpConnFrom = null, fpPanStart = null, fpPanBase = {x:0,y:0};
+let fpHovConn = null, fpMouse = null;
+let fpDirty = false, fpPalDragType = null, fpInited = false;
+let pendingRestoreFile = null;
+
+// ===== LOGIN =====
+async function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  try {
+    const r = await fetch(API + '/api/auth', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: u, password: p})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      sessionPassword = p;
+      document.getElementById('loginWrap').style.display = 'none';
+      const mw = document.getElementById('mainWrap');
+      mw.style.display = 'flex';
+      mw.style.flexDirection = 'column';
+      // Wait for DOM to render mainWrap before initializing canvas
+      await loadData();
+      setTimeout(fpEnsureInit, 100);
+    } else {
+      document.getElementById('loginErr').style.display = 'block';
+      document.getElementById('loginErr').textContent = 'Invalid username or password';
+    }
+  } catch(e) {
+    document.getElementById('loginErr').style.display = 'block';
+    document.getElementById('loginErr').textContent = 'Cannot connect to API';
+  }
+}
+
+// ===== TABS =====
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'flow') { setTimeout(fpEnsureInit, 50); }
+  if (name === 'audit') loadAuditLog();
+}
+
+// ===== DATA LOAD =====
+async function loadData() {
+  try {
+    const r = await fetch(API + '/api/config');
+    cfg = await r.json();
+    fp = JSON.parse(JSON.stringify(cfg.process_flow || {nodes:[], connections:[]}));
+    const a = cfg.area || {};
+    document.getElementById('hdrSub').textContent =
+      (a.plant||'')+' — Dept '+(a.dept||'')+' — '+(a.name||'');
+    document.title = 'Flow — ' + (a.code||'') + ' ' + (a.name||'');
+    document.getElementById('fpStatus').textContent =
+      'Connected — ' + (cfg.machines||[]).length + ' machines';
+    // fpEnsureInit called after DOM renders from doLogin
+  } catch(e) {
+    document.getElementById('fpStatus').textContent = 'Cannot connect to API';
+    toast('Cannot connect to API', true);
+  }
+}
+
+// ===== CANVAS INIT =====
+function fpEnsureInit() {
+  const canvas = document.getElementById('fpCanvas');
+  const wrap = document.getElementById('fpCanvasWrap');
+  if (!canvas || !wrap) return;
+  // If canvas has no size yet, retry after render
+  if (wrap.clientWidth === 0 || wrap.clientHeight === 0) {
+    setTimeout(fpEnsureInit, 100);
+    return;
+  }
+  if (!fpInited) {
+    fpInited = true;
+    new ResizeObserver(() => {
+      const w = wrap.clientWidth, h = wrap.clientHeight;
+      if (w > 0 && h > 0) { canvas.width = w; canvas.height = h; fpDraw(); }
+    }).observe(wrap);
+  }
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  fpDraw();
+  setTimeout(fpZoomFit, 150);
+}
+
+// ===== DRAW =====
+function fpW2S(x,y){return{x:x*fpZoom+fpPan.x,y:y*fpZoom+fpPan.y}}
+function fpS2W(x,y){return{x:(x-fpPan.x)/fpZoom,y:(y-fpPan.y)/fpZoom}}
+function fpNodeColor(type){
+  if(type==='operation')return{fill:'#dbeafe',stroke:'#0033A0',text:'#0033A0',port:'#0033A0'};
+  if(type==='buffer')   return{fill:'#fef9c3',stroke:'#d97706',text:'#7c5700',port:'#d97706'};
+  if(type==='output')   return{fill:'#dcfce7',stroke:'#16a34a',text:'#14532d',port:'#16a34a'};
+  return{fill:'#f3f4f6',stroke:'#9ca3af',text:'#374151',port:'#9ca3af'};
+}
+function fpDraw(){
+  const canvas=document.getElementById('fpCanvas');
+  if(!canvas||!canvas.width||!canvas.height)return;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle='rgba(0,0,0,.05)';ctx.lineWidth=1;
+  const gs=40*fpZoom,ox=((fpPan.x%gs)+gs)%gs,oy=((fpPan.y%gs)+gs)%gs;
+  for(let x=ox;x<canvas.width;x+=gs){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()}
+  for(let y=oy;y<canvas.height;y+=gs){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()}
+  fp.connections.forEach((c,i)=>{
+    const s=fp.nodes.find(n=>n.id===c.from),d=fp.nodes.find(n=>n.id===c.to);
+    if(s&&d)fpDrawConn(ctx,s,d,i===fpHovConn);
+  });
+  if(fpConnFrom&&fpMouse){
+    const src=fp.nodes.find(n=>n.id===fpConnFrom);
+    if(src){
+      const s=fpW2S(src.x+FP_W,src.y+FP_H/2);
+      ctx.save();ctx.strokeStyle='#F9A825';ctx.lineWidth=2;ctx.setLineDash([6,4]);
+      ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(fpMouse.x,fpMouse.y);ctx.stroke();
+      ctx.setLineDash([]);ctx.restore();
+    }
+  }
+  fp.nodes.forEach(n=>fpDrawNode(ctx,n));
+  document.getElementById('fpNodeCount').textContent=fp.nodes.length+' nodes';
+  document.getElementById('fpConnCount').textContent=fp.connections.length+' connections';
+}
+function fpDrawConn(ctx,src,dst,hov){
+  const s=fpW2S(src.x+FP_W,src.y+FP_H/2),d=fpW2S(dst.x,dst.y+FP_H/2),cx=(s.x+d.x)/2;
+  ctx.save();ctx.strokeStyle=hov?'#ef4444':'#94a3b8';ctx.lineWidth=hov?3:2;
+  if(hov){ctx.shadowColor='#ef4444';ctx.shadowBlur=6}
+  ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.bezierCurveTo(cx,s.y,cx,d.y,d.x,d.y);ctx.stroke();
+  const angle=Math.atan2(d.y-(s.y+d.y)/2,d.x-cx);
+  ctx.fillStyle=ctx.strokeStyle;ctx.shadowBlur=0;
+  ctx.save();ctx.translate(d.x,d.y);ctx.rotate(angle);
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-10,-5);ctx.lineTo(-10,5);ctx.closePath();ctx.fill();
+  ctx.restore();ctx.restore();
+}
+function fpDrawNode(ctx,node){
+  const s=fpW2S(node.x,node.y),w=FP_W*fpZoom,h=FP_H*fpZoom,r=6*fpZoom;
+  const c=fpNodeColor(node.type),sel=node.id===fpSelected;
+  ctx.save();
+  ctx.shadowColor=sel?'#0033A0':'rgba(0,0,0,.12)';ctx.shadowBlur=sel?14:5;ctx.shadowOffsetY=sel?0:2;
+  ctx.fillStyle=c.fill;ctx.strokeStyle=sel?'#0033A0':c.stroke;ctx.lineWidth=sel?2.5:1.5;
+  ctx.beginPath();
+  ctx.moveTo(s.x+r,s.y);ctx.lineTo(s.x+w-r,s.y);ctx.quadraticCurveTo(s.x+w,s.y,s.x+w,s.y+r);
+  ctx.lineTo(s.x+w,s.y+h-r);ctx.quadraticCurveTo(s.x+w,s.y+h,s.x+w-r,s.y+h);
+  ctx.lineTo(s.x+r,s.y+h);ctx.quadraticCurveTo(s.x,s.y+h,s.x,s.y+h-r);
+  ctx.lineTo(s.x,s.y+r);ctx.quadraticCurveTo(s.x,s.y,s.x+r,s.y);
+  ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  const lines=(node.label||node.id).split('\n');
+  ctx.fillStyle=c.text;ctx.font=`700 ${Math.max(9,12*fpZoom)}px Arial,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  const lh=15*fpZoom,sy2=s.y+h/2-(lines.length-1)*lh/2;
+  lines.forEach((l,i)=>ctx.fillText(l,s.x+w/2,sy2+i*lh,w-14*fpZoom));
+  ctx.fillStyle=c.port;ctx.globalAlpha=0.4;
+  ctx.beginPath();ctx.arc(s.x,s.y+h/2,4*fpZoom,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.beginPath();ctx.arc(s.x+w,s.y+h/2,5*fpZoom,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='white';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.restore();
+}
+
+// ===== MOUSE =====
+function fpGetPos(e){const r=document.getElementById('fpCanvas').getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+function fpNodeAt(sx,sy){for(let i=fp.nodes.length-1;i>=0;i--){const n=fp.nodes[i],s=fpW2S(n.x,n.y);if(sx>=s.x&&sx<=s.x+FP_W*fpZoom&&sy>=s.y&&sy<=s.y+FP_H*fpZoom)return n}return null}
+function fpNearPort(n,sx,sy){const s=fpW2S(n.x+FP_W,n.y+FP_H/2);return Math.hypot(sx-s.x,sy-s.y)<16}
+function fpConnAt(sx,sy){
+  for(let i=0;i<fp.connections.length;i++){
+    const c=fp.connections[i];
+    const src=fp.nodes.find(n=>n.id===c.from),dst=fp.nodes.find(n=>n.id===c.to);
+    if(!src||!dst)continue;
+    const s=fpW2S(src.x+FP_W,src.y+FP_H/2),d=fpW2S(dst.x,dst.y+FP_H/2),cx=(s.x+d.x)/2;
+    for(let t=0;t<=1;t+=0.04){
+      const bx=Math.pow(1-t,3)*s.x+3*Math.pow(1-t,2)*t*cx+3*(1-t)*t*t*cx+t*t*t*d.x;
+      const by=Math.pow(1-t,3)*s.y+3*Math.pow(1-t,2)*t*s.y+3*(1-t)*t*t*d.y+t*t*t*d.y;
+      if(Math.hypot(sx-bx,sy-by)<9)return i;
+    }
+  }
+  return -1;
+}
+function fpMouseDown(e){
+  if(e.button!==0)return;
+  const pos=fpGetPos(e),node=fpNodeAt(pos.x,pos.y);
+  if(node){
+    if(fpNearPort(node,pos.x,pos.y)){fpConnFrom=node.id;e.preventDefault();return}
+    fpSelectNode(node.id);fpDragging=node.id;
+    const w=fpS2W(pos.x,pos.y);fpDragOff={x:w.x-node.x,y:w.y-node.y};
+    e.preventDefault();return;
+  }
+  const ci=fpConnAt(pos.x,pos.y);
+  if(ci>=0){if(confirm('Delete this connection?')){fp.connections.splice(ci,1);fpHovConn=null;fpDirty=true;fpShowDirty();fpDraw()}return}
+  fpClearSelect();fpPanStart={x:e.clientX,y:e.clientY};fpPanBase={...fpPan};
+}
+function fpMouseMove(e){
+  const pos=fpGetPos(e);fpMouse=pos;
+  if(fpDragging){const node=fp.nodes.find(n=>n.id===fpDragging);if(node){const w=fpS2W(pos.x,pos.y);node.x=Math.round((w.x-fpDragOff.x)/10)*10;node.y=Math.round((w.y-fpDragOff.y)/10)*10;fpDirty=true}fpDraw();return}
+  if(fpConnFrom){fpDraw();return}
+  if(fpPanStart){fpPan.x=fpPanBase.x+(e.clientX-fpPanStart.x);fpPan.y=fpPanBase.y+(e.clientY-fpPanStart.y);fpDraw();return}
+  const ci=fpConnAt(pos.x,pos.y);
+  if(ci!==fpHovConn){fpHovConn=ci>=0?ci:null;fpDraw()}
+  const n=fpNodeAt(pos.x,pos.y);
+  document.getElementById('fpCanvas').style.cursor=ci>=0?'pointer':(n?(fpNearPort(n,pos.x,pos.y)?'crosshair':'move'):'default');
+}
+function fpMouseUp(e){
+  const pos=fpGetPos(e);
+  if(fpConnFrom){
+    const target=fpNodeAt(pos.x,pos.y);
+    if(target&&target.id!==fpConnFrom){
+      const exists=fp.connections.find(c=>c.from===fpConnFrom&&c.to===target.id);
+      if(!exists){fp.connections.push({from:fpConnFrom,to:target.id});fpDirty=true;fpShowDirty();toast('Connection added')}
+    }
+    fpConnFrom=null;fpDraw();return;
+  }
+  fpDragging=null;fpPanStart=null;
+}
+function fpWheel(e){
+  e.preventDefault();
+  const pos=fpGetPos(e),d=e.deltaY>0?0.88:1.14;
+  const nz=Math.max(0.25,Math.min(2.5,fpZoom*d));
+  fpPan.x=pos.x-(pos.x-fpPan.x)*(nz/fpZoom);fpPan.y=pos.y-(pos.y-fpPan.y)*(nz/fpZoom);
+  fpZoom=nz;fpDraw();
+}
+
+// ===== PALETTE DROP =====
+function fpDragStart(e,type){fpPalDragType=type;e.dataTransfer.setData('text/plain',type);e.dataTransfer.effectAllowed='copy'}
+function fpCanvasDrop(e){
+  e.preventDefault();
+  const pos=fpGetPos(e),w=fpS2W(pos.x,pos.y);
+  const type=fpPalDragType||e.dataTransfer.getData('text/plain');
+  if(!type)return;
+  const labels={operation:'New Op',buffer:'Buffer',output:'Output'};
+  const id=type.toUpperCase()+'_'+Date.now();
+  fp.nodes.push({id,type,label:labels[type],note:'',machines:[],x:Math.round((w.x-FP_W/2)/10)*10,y:Math.round((w.y-FP_H/2)/10)*10});
+  fpDirty=true;fpShowDirty();fpSelectNode(id);fpDraw();fpPalDragType=null;
+}
+
+// ===== SELECTION =====
+function fpSelectNode(id){
+  fpSelected=id;
+  const node=fp.nodes.find(n=>n.id===id);
+  if(!node)return;
+  document.getElementById('fpPanelEmpty').style.display='none';
+  document.getElementById('fpPanelForm').style.display='flex';
+  document.getElementById('fpDeleteBtn').style.display='';
+  document.getElementById('fpId').value=node.id;
+  document.getElementById('fpLabel').value=node.label||'';
+  document.getElementById('fpNote').value=node.note||'';
+  const msec=document.getElementById('fpMachinesSection');
+  if(node.type==='operation'){
+    msec.style.display='';
+    const usedElsewhere=new Set();
+    fp.nodes.forEach(n=>{if(n.id!==id)(n.machines||[]).forEach(m=>usedElsewhere.add(m))});
+    document.getElementById('fpMachinesList').innerHTML=(cfg.machines||[]).map(m=>{
+      const chk=(node.machines||[]).includes(m.id),dis=usedElsewhere.has(m.id)&&!chk;
+      return`<label class="machine-item${dis?' disabled':''}"><input type="checkbox" value="${m.id}" ${chk?'checked':''} ${dis?'disabled':''} onchange="fpToggleMachine('${m.id}',this.checked)">${esc(m.name)} <span style="color:var(--gray);font-size:10px">(${m.op})</span></label>`;
+    }).join('');
+  }else{msec.style.display='none'}
+  fpDraw();
+}
+function fpClearSelect(){
+  fpSelected=null;
+  document.getElementById('fpPanelEmpty').style.display='';
+  document.getElementById('fpPanelForm').style.display='none';
+  document.getElementById('fpDeleteBtn').style.display='none';
+  fpDraw();
+}
+function fpUpdateNode(key,val){const n=fp.nodes.find(n=>n.id===fpSelected);if(n){n[key]=val;fpDirty=true;fpShowDirty();fpDraw()}}
+function fpToggleMachine(mid,chk){
+  const n=fp.nodes.find(n=>n.id===fpSelected);if(!n)return;
+  if(!n.machines)n.machines=[];
+  if(chk){if(!n.machines.includes(mid))n.machines.push(mid)}else n.machines=n.machines.filter(m=>m!==mid);
+  fpDirty=true;fpShowDirty();
+}
+function fpDeleteSelected(){
+  if(!fpSelected||!confirm('Delete this node and all its connections?'))return;
+  fp.nodes=fp.nodes.filter(n=>n.id!==fpSelected);
+  fp.connections=fp.connections.filter(c=>c.from!==fpSelected&&c.to!==fpSelected);
+  fpClearSelect();fpDirty=true;fpShowDirty();fpDraw();
+}
+function fpZoomFit(){
+  const canvas=document.getElementById('fpCanvas');
+  if(!fp.nodes.length||!canvas||!canvas.width)return;
+  const xs=fp.nodes.map(n=>n.x),ys=fp.nodes.map(n=>n.y);
+  const minX=Math.min(...xs)-60,maxX=Math.max(...xs)+FP_W+60;
+  const minY=Math.min(...ys)-60,maxY=Math.max(...ys)+FP_H+60;
+  const fw=maxX-minX,fh=maxY-minY;if(fw<=0||fh<=0)return;
+  fpZoom=Math.min(canvas.width/fw,canvas.height/fh,1.4);
+  fpPan.x=(canvas.width-fw*fpZoom)/2-minX*fpZoom;
+  fpPan.y=(canvas.height-fh*fpZoom)/2-minY*fpZoom;
+  fpDraw();
+}
+function fpShowDirty(){document.getElementById('fpDirtyMsg').style.display=fpDirty?'':'none'}
+
+// ===== SAVE =====
+function promptSave(){
+  document.getElementById('saveUser').value='';
+  document.getElementById('saveComment').value='';
+  document.getElementById('saveOverlay').classList.add('show');
+}
+async function confirmSave(){
+  const changedBy=document.getElementById('saveUser').value.trim()||'admin';
+  const comment=document.getElementById('saveComment').value.trim();
+  document.getElementById('saveOverlay').classList.remove('show');
+  try{
+    cfg.process_flow=fp;
+    const r=await fetch(API+'/api/config',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:sessionPassword,config:cfg,changed_by:changedBy,
+        comment:comment||'Process flow updated',tab:'process_flow'})});
+    if(!r.ok)throw new Error('Server error '+r.status);
+    fpDirty=false;fpShowDirty();toast('Flow saved ✓');
+  }catch(e){toast('Save failed: '+e.message,true)}
+}
+
+// ===== AUDIT LOG =====
+async function loadAuditLog(){
+  try{
+    const r=await fetch(API+'/api/audit_log');
+    const log=await r.json();
+    const tbody=document.getElementById('auditRows');
+    if(!log.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--dgray)">No changes recorded yet</td></tr>';return}
+    tbody.innerHTML=[...log].reverse().map(entry=>{
+      const changes=(entry.changes||[]).slice(0,8);
+      const more=(entry.changes||[]).length-8;
+      const isRestore=entry.tab==='restore';
+      return`<tr>
+        <td style="white-space:nowrap;font-family:monospace;font-size:11px">${(entry.timestamp||'').slice(0,19).replace('T',' ')||''}</td>
+        <td style="font-weight:700">${esc(entry.changed_by||'')} </td>
+        <td><span class="badge ${isRestore?'badge-restore':'badge-tab'}">${esc(entry.tab||'')} </span></td>
+        <td><ul class="change-list">${changes.map(c=>`<li>${esc(c)}</li>`).join('')}${more>0?`<li><button onclick="this.closest('ul').querySelectorAll('.hc').forEach(e=>e.style.display='');this.style.display='none'" style="background:none;border:none;color:var(--gm-blue);cursor:pointer;font-size:11px;font-style:italic;padding:0">...and ${more} more</button>${(entry.changes||[]).slice(8).map(c=>`<span class="hc" style="display:none"><br>• ${esc(c)}</span>`).join('')}</li>`:''}</ul></td>
+        <td style="font-size:11px;color:var(--dgray)">${esc(entry.comment||'')} </td>
+        <td><button class="btn-restore" onclick="promptRestore('${esc(entry.backup_file||'')} ','${(entry.timestamp||'').slice(0,19).replace('T',' ')||''}')">Restore</button></td>
+      </tr>`;
+    }).join('');
+  }catch(e){document.getElementById('auditRows').innerHTML='<tr><td colspan="6" style="color:var(--red);padding:16px">Could not load audit log</td></tr>'}
+}
+
+// ===== RESTORE =====
+function promptRestore(backupFile,timestamp){
+  if(!backupFile.trim()){alert('No backup file for this entry');return}
+  pendingRestoreFile=backupFile.trim();
+  document.getElementById('restoreInfo').textContent='Restoring from: '+timestamp+'. Current config will be backed up first.';
+  document.getElementById('restoreUser').value='';
+  document.getElementById('restoreOverlay').classList.add('show');
+}
+async function confirmRestore(){
+  const changedBy=document.getElementById('restoreUser').value.trim()||'admin';
+  document.getElementById('restoreOverlay').classList.remove('show');
+  try{
+    const r=await fetch(API+'/api/config/restore',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:sessionPassword,backup_file:pendingRestoreFile,changed_by:changedBy})});
+    if(!r.ok)throw new Error('Restore failed: '+r.status);
+    toast('Config restored ✓ — reloading...');
+    setTimeout(()=>loadData().then(()=>loadAuditLog()),1000);
+  }catch(e){toast('Restore failed: '+e.message,true)}
+}
+
+// ===== HELPERS =====
+function toast(msg,err){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast'+(err?' err':'')+' show';
+  setTimeout(()=>el.classList.remove('show'),2500);
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+</script>
+</body>
+</html>

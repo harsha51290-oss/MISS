@@ -36,10 +36,16 @@ AREA_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(AREA_DIR, "config.json")
 DB_FILE = os.path.join(AREA_DIR, "mis.db")
 DASHBOARD_FILE = os.path.join(AREA_DIR, "dashboard.html")
+CONFIG_HTML_FILE = os.path.join(AREA_DIR, "config.html")
+FLOW_EDITOR_FILE = os.path.join(AREA_DIR, "flow.html")
 BACKUP_DIR = os.path.join(AREA_DIR, "backups", "config")
 os.makedirs(BACKUP_DIR, exist_ok=True)
 
-PASSWORD = "Iamcontrols@2100"
+def get_password():
+    try:
+        return load_config().get("admin", {}).get("password", "")
+    except Exception:
+        return ""
 app = FastAPI(title="MIS Area API")
 
 RUNNING_STATES = {1, 15}
@@ -120,24 +126,63 @@ def shift_time_range(cfg, shift_letter, day_id):
         end = dt.replace(hour=eh, minute=em, second=0)
     return start, end
 
-def calc_expected_now(cfg, shift_start, shift_target):
-    now = datetime.now()
-    elapsed = min((now - shift_start).total_seconds(), 7.25 * 3600)
-    if elapsed <= 0 or shift_target <= 0:
-        return 0
-    breaks = cfg.get("breaks", {})
-    total_break_sec = 0
-    for hr_key, mins in breaks.items():
-        if elapsed > (int(hr_key) - 1) * 3600:
-            total_break_sec += int(mins) * 60
-    available = max(0, elapsed - total_break_sec)
-    total_available = 7.25 * 3600 - sum(int(m) * 60 for m in breaks.values())
-    return round(shift_target * (available / total_available)) if total_available > 0 else 0
+def parse_break_windows(cfg, shift_start, shift_end):
+    """Parse breaks list [{start, end}] into (datetime, datetime) tuples for this shift."""
+    breaks = cfg.get("breaks", [])
+    if not breaks or not isinstance(breaks, list):
+        return []
+    windows = []
+    for b in breaks:
+        try:
+            bsh, bsm = map(int, b["start"].split(":"))
+            beh, bem = map(int, b["end"].split(":"))
+            bs = shift_start.replace(hour=bsh, minute=bsm, second=0, microsecond=0)
+            be = shift_start.replace(hour=beh, minute=bem, second=0, microsecond=0)
+            if be <= bs:
+                be += timedelta(days=1)
+            if bs < shift_end and be > shift_start:
+                windows.append((max(bs, shift_start), min(be, shift_end)))
+        except Exception:
+            continue
+    return windows
 
-def calc_hourly_target(cfg, shift_target):
-    breaks = cfg.get("breaks", {})
-    available_min = 7.25 * 60 - sum(int(v) for v in breaks.values())
-    return round(shift_target / (available_min / 60)) if available_min > 0 else 0
+
+def calc_productive_seconds(shift_start, as_of, break_windows):
+    """Productive seconds from shift_start to as_of, minus any elapsed break time."""
+    total = max(0, (as_of - shift_start).total_seconds())
+    for bs, be in break_windows:
+        if be <= shift_start or bs >= as_of:
+            continue
+        overlap = (min(be, as_of) - max(bs, shift_start)).total_seconds()
+        if overlap > 0:
+            total -= overlap
+    return max(0, total)
+
+
+def calc_expected_now(cfg, shift_start, shift_end, shift_target):
+    """Precise expected count — pauses during exact break windows."""
+    if shift_target <= 0:
+        return 0
+    now = datetime.now()
+    as_of = min(now, shift_end)
+    if as_of <= shift_start:
+        return 0
+    bw = parse_break_windows(cfg, shift_start, shift_end)
+    productive_now = calc_productive_seconds(shift_start, as_of, bw)
+    total_productive = calc_productive_seconds(shift_start, shift_end, bw)
+    if total_productive <= 0:
+        return 0
+    return round(shift_target * (productive_now / total_productive))
+
+
+def calc_hourly_target(cfg, shift_start, shift_end, shift_target):
+    """Hourly target based on precise productive hours in shift."""
+    if shift_target <= 0:
+        return 0
+    bw = parse_break_windows(cfg, shift_start, shift_end)
+    total_productive = calc_productive_seconds(shift_start, shift_end, bw)
+    productive_hours = total_productive / 3600
+    return round(shift_target / productive_hours) if productive_hours > 0 else 0
 
 
 # -- Dashboard --
@@ -292,7 +337,7 @@ async def get_machines(shift: str = "current"):
         if good_shift > 0 and run_seconds > 0:
             avg_ct = run_seconds / good_shift
 
-        expected = calc_expected_now(cfg, shift_start, shift_target) if shift == "current" else good_shift
+        expected = calc_expected_now(cfg, shift_start, shift_end, shift_target) if shift == "current" else good_shift
 
         out.append({
             "machine_id": mid,
@@ -309,7 +354,7 @@ async def get_machines(shift: str = "current"):
             "shift_target": shift_target,
             "config_target": m["shift_target"],
             "daily_target": dm["daily_target"] if dm else m["shift_target"] * 3,
-            "hourly_target": calc_hourly_target(cfg, shift_target),
+            "hourly_target": calc_hourly_target(cfg, shift_start, shift_end, shift_target),
             "rated_ct": rated_ct,
             "avg_ct": avg_ct,
             "oee": oee_val,
@@ -457,7 +502,6 @@ async def get_hourly_trend(shift: str = "current"):
 async def get_active_trades():
     cfg = load_config()
     conn = get_db()
-    sc = cfg.get("support_codes", {})
     rows = conn.execute(
         "SELECT * FROM support_call_events WHERE timestamp_end IS NULL ORDER BY timestamp_start"
     ).fetchall()
@@ -475,6 +519,52 @@ async def get_active_trades():
         })
     conn.close()
     return JSONResponse(trades)
+
+
+@app.get("/api/trades_history")
+async def get_trades_history(shift: str = "current", limit: int = 200):
+    """All trade calls (open and closed) for a given shift, newest first."""
+    cfg = load_config()
+    shift_letter, day_id, shift_start, shift_end = resolve_shift(cfg, shift)
+    s_start, s_end = shift_time_range(cfg, shift_letter, day_id)
+    conn = get_db()
+    now = datetime.now()
+
+    if s_start and s_end:
+        rows = conn.execute("""
+            SELECT * FROM support_call_events
+            WHERE timestamp_start >= ? AND timestamp_start < ?
+            ORDER BY timestamp_start DESC LIMIT ?
+        """, (s_start.isoformat(), s_end.isoformat(), limit)).fetchall()
+    else:
+        rows = conn.execute("""
+            SELECT * FROM support_call_events
+            ORDER BY timestamp_start DESC LIMIT ?
+        """, (limit,)).fetchall()
+
+    result = []
+    for r in rows:
+        start = datetime.fromisoformat(r["timestamp_start"])
+        end_ts = r["timestamp_end"]
+        if end_ts:
+            dur = r["duration_min"] or round((datetime.fromisoformat(end_ts) - start).total_seconds() / 60, 1)
+            status = "Closed"
+        else:
+            dur = round((now - start).total_seconds() / 60, 1)
+            status = "Active"
+        result.append({
+            "id": r["id"],
+            "machine_id": r["machine_id"],
+            "machine_name": r["machine_name"],
+            "support_code": r["support_call"],
+            "support_short": r["support_short"],
+            "called_at": r["timestamp_start"],
+            "closed_at": end_ts,
+            "duration_min": dur,
+            "status": status,
+        })
+    conn.close()
+    return JSONResponse(result)
 
 
 # -- Tool Current --
@@ -497,12 +587,30 @@ async def get_tool_current():
         ).fetchall()
         avg_map = {r["tool_slot"]: round(r["avg_life"]) for r in avg_rows if r["avg_life"]}
 
+        # Get tool config (description, limit, warning) from cfg.tools
+        tool_cfg = cfg.get("tools", {}).get(mid, {})
+
         tools = []
         for slot in range(7):
             count = (snap[slot] or 0) if snap else 0
             avg_life = avg_map.get(slot, 0)
             pct_used = round(count / avg_life * 100) if avg_life > 0 else None
-            tools.append({"slot": slot, "count": count, "avg_life": avg_life, "pct_used": pct_used})
+            slot_cfg = tool_cfg.get(f"T{slot}", {})
+            limit = slot_cfg.get("limit", 0)
+            warning = slot_cfg.get("warning", 0)
+            description = slot_cfg.get("description", "")
+            # Calculate pct from limit if available, fallback to avg_life
+            if limit > 0:
+                pct_used = round(count / limit * 100)
+            tools.append({
+                "slot": slot,
+                "count": count,
+                "avg_life": avg_life,
+                "pct_used": pct_used,
+                "limit": limit,
+                "warning": warning,
+                "description": description,
+            })
 
         result.append({
             "machine_id": mid, "machine_name": m["name"],
@@ -533,28 +641,150 @@ async def get_data():
 async def get_config():
     return load_config()
 
+AUDIT_LOG_FILE = os.path.join(AREA_DIR, "backups", "audit_log.json")
+os.makedirs(os.path.join(AREA_DIR, "backups"), exist_ok=True)
+
+
+def detect_changes(old_cfg, new_cfg, path=""):
+    """Recursively detect changes between two config dicts. Returns list of change strings."""
+    changes = []
+    all_keys = set(list(old_cfg.keys()) + list(new_cfg.keys())) if isinstance(old_cfg, dict) else []
+    for key in all_keys:
+        full_path = f"{path}.{key}" if path else key
+        old_val = old_cfg.get(key)
+        new_val = new_cfg.get(key)
+        if old_val == new_val:
+            continue
+        if isinstance(old_val, dict) and isinstance(new_val, dict):
+            changes.extend(detect_changes(old_val, new_val, full_path))
+        elif isinstance(old_val, list) and isinstance(new_val, list):
+            if old_val != new_val:
+                changes.append(f"{full_path}: list changed ({len(old_val)} -> {len(new_val)} items)")
+        elif old_val is None:
+            changes.append(f"{full_path}: added = {new_val}")
+        elif new_val is None:
+            changes.append(f"{full_path}: removed (was {old_val})")
+        else:
+            changes.append(f"{full_path}: {old_val} -> {new_val}")
+    return changes
+
+
+def load_audit_log():
+    if os.path.exists(AUDIT_LOG_FILE):
+        try:
+            with open(AUDIT_LOG_FILE, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
+
+
+def save_audit_log(log):
+    with open(AUDIT_LOG_FILE, "w") as f:
+        json.dump(log, f, indent=2)
+
+
 @app.post("/api/config")
 async def update_config(request: Request):
     body = await request.json()
-    if body.get("password") != PASSWORD:
+    if body.get("password") != get_password():
         raise HTTPException(403, "Invalid password")
     new_config = body.get("config")
     if not new_config:
         raise HTTPException(400, "Missing config data")
+    changed_by = body.get("changed_by", "admin")
+    comment = body.get("comment", "")
+    tab = body.get("tab", "unknown")
+
+    # Load current config for diff
+    old_config = load_config()
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    with open(CONFIG_FILE, "r") as f:
-        with open(os.path.join(BACKUP_DIR, f"config_{ts}.json"), "w") as bf:
-            bf.write(f.read())
+    ts_iso = datetime.now().isoformat()
+
+    # Detect changes
+    changes = detect_changes(old_config, new_config)
+
+    # Save backup of old config
+    backup_filename = f"config_{ts}.json"
+    backup_path = os.path.join(BACKUP_DIR, backup_filename)
+    with open(backup_path, "w") as bf:
+        json.dump(old_config, bf, indent=2)
+
+    # Save new config
     with open(CONFIG_FILE, "w") as f:
         json.dump(new_config, f, indent=2)
-    return {"status": "ok"}
+
+    # Append to audit log
+    log = load_audit_log()
+    log.append({
+        "timestamp": ts_iso,
+        "changed_by": changed_by,
+        "tab": tab,
+        "comment": comment,
+        "changes": changes,
+        "backup_file": backup_filename,
+    })
+    save_audit_log(log)
+
+    return {"status": "ok", "changes_detected": len(changes), "backup": backup_filename}
+
+
+@app.get("/api/audit_log")
+async def get_audit_log():
+    """Return full audit log history."""
+    return JSONResponse(load_audit_log())
+
+
+@app.post("/api/config/restore")
+async def restore_config(request: Request):
+    """Restore a previous config from backup file."""
+    body = await request.json()
+    if body.get("password") != get_password():
+        raise HTTPException(403, "Invalid password")
+    backup_file = body.get("backup_file")
+    changed_by = body.get("changed_by", "admin")
+    if not backup_file:
+        raise HTTPException(400, "Missing backup_file")
+    backup_path = os.path.join(BACKUP_DIR, backup_file)
+    if not os.path.exists(backup_path):
+        raise HTTPException(404, f"Backup file not found: {backup_file}")
+
+    # Load backup
+    with open(backup_path, "r") as f:
+        restored_config = json.load(f)
+
+    # Save current as backup before restoring
+    old_config = load_config()
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts_iso = datetime.now().isoformat()
+    pre_restore_backup = f"config_{ts}_pre_restore.json"
+    with open(os.path.join(BACKUP_DIR, pre_restore_backup), "w") as bf:
+        json.dump(old_config, bf, indent=2)
+
+    # Write restored config
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(restored_config, f, indent=2)
+
+    # Log the restore
+    log = load_audit_log()
+    log.append({
+        "timestamp": ts_iso,
+        "changed_by": changed_by,
+        "tab": "restore",
+        "comment": f"Restored from backup: {backup_file}",
+        "changes": [f"Full config restored from {backup_file}"],
+        "backup_file": pre_restore_backup,
+    })
+    save_audit_log(log)
+
+    return {"status": "ok", "restored_from": backup_file}
 
 
 # -- Demand --
 @app.post("/api/demand")
 async def push_demand(request: Request):
     body = await request.json()
-    if body.get("password") != PASSWORD:
+    if body.get("password") != get_password():
         raise HTTPException(403, "Invalid password")
     day_id = body.get("day_id")
     if not day_id:
@@ -601,20 +831,226 @@ async def get_demand(day_id: str = None):
 # -- Config page --
 @app.get("/config", response_class=HTMLResponse)
 async def config_page():
+    if os.path.exists(CONFIG_HTML_FILE):
+        with open(CONFIG_HTML_FILE, "r", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+    return HTMLResponse("<h1>config.html not found</h1>", status_code=404)
+
+
+# -- Admin auth (config page login) --
+@app.post("/api/auth")
+async def check_auth(request: Request):
+    """Validate config page credentials against config.json admin section."""
+    body = await request.json()
     cfg = load_config()
-    a = cfg["area"]
-    h = f'<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Config - {a["code"]}</title>'
-    h += '<style>body{font-family:Arial;margin:20px;background:#f5f5f5}h1{color:#001B3A}'
-    h += '.c{background:white;border-radius:8px;padding:16px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.1)}'
-    h += 'table{width:100%;border-collapse:collapse;font-size:13px}th{background:#002856;color:white;padding:8px;text-align:left}'
-    h += 'td{padding:6px 8px;border-bottom:1px solid #eee}.m{font-family:monospace}</style></head><body>'
-    h += f'<h1>Config - Area {a["code"]}: {a["name"]}</h1>'
-    h += f'<p>Port: {a["api_port"]} | Machines: {len(cfg["machines"])} | <a href="/dashboard">Dashboard</a> | <a href="/api/health">Health</a></p>'
-    h += '<div class="c"><h3>Machines</h3><table><tr><th>ID</th><th>Name</th><th>Op Name</th><th>IP</th><th>UDT Tag</th><th>CT</th><th>Target</th></tr>'
-    for m in cfg["machines"]:
-        h += f'<tr><td class="m">{m["id"]}</td><td>{m["name"]}</td><td>{m.get("op_name","")}</td><td class="m">{m.get("ip","")}</td><td class="m">{m.get("udt_tag","")}</td><td>{m.get("rated_ct","")}</td><td>{m.get("shift_target","")}</td></tr>'
-    h += '</table></div></body></html>'
-    return HTMLResponse(h)
+    admin = cfg.get("admin", {})
+    if body.get("username") == admin.get("username") and body.get("password") == admin.get("password"):
+        return JSONResponse({"ok": True})
+    return JSONResponse({"ok": False}, status_code=401)
+
+
+
+
+# ---------------------------------------------------------------------------
+# Buffer Flow
+# ---------------------------------------------------------------------------
+
+BUFFER_LOG_TABLE = """
+    CREATE TABLE IF NOT EXISTS buffer_events (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp   TEXT NOT NULL,
+        buffer_id   TEXT NOT NULL,
+        count       REAL NOT NULL,
+        source      TEXT DEFAULT 'manual',
+        shift       TEXT,
+        day_id      TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_buf_id_ts ON buffer_events (buffer_id, timestamp);
+"""
+
+def ensure_buffer_table():
+    conn = get_db()
+    conn.executescript(BUFFER_LOG_TABLE)
+    conn.commit()
+    conn.close()
+
+ensure_buffer_table()
+
+
+@app.get("/api/buffer_state")
+async def get_buffer_state():
+    """
+    Returns current buffer counts for all buffers in process_flow.
+    Count = last manual entry + net auto adjustments since then.
+    Auto adjustments: upstream op output increments, downstream op input decrements.
+    """
+    cfg = load_config()
+    flow = cfg.get("process_flow", {})
+    nodes = {n["id"]: n for n in flow.get("nodes", [])}
+    connections = flow.get("connections", [])
+    conn = get_db()
+    now = datetime.now()
+    shift_letter, day_id, shift_start, shift_end = get_shift_info(cfg, now)
+
+    # Build upstream/downstream machine maps for each buffer
+    # upstream_of[buffer_id] = list of operation node ids feeding INTO buffer
+    # downstream_of[buffer_id] = list of operation node ids consuming FROM buffer
+    upstream_of = {}
+    downstream_of = {}
+    for edge in connections:
+        src = edge["from"]
+        dst = edge["to"]
+        if nodes.get(dst, {}).get("type") == "buffer":
+            upstream_of.setdefault(dst, []).append(src)
+        if nodes.get(src, {}).get("type") == "buffer":
+            downstream_of.setdefault(src, []).append(dst)
+
+    result = []
+    for node in flow.get("nodes", []):
+        if node["type"] != "buffer":
+            continue
+        bid = node["id"]
+
+        # Get last manual entry
+        last_manual = conn.execute("""
+            SELECT count, timestamp FROM buffer_events
+            WHERE buffer_id=? AND source='manual'
+            ORDER BY timestamp DESC LIMIT 1
+        """, (bid,)).fetchone()
+
+        base_count = last_manual["count"] if last_manual else 0
+        base_ts = last_manual["timestamp"] if last_manual else shift_start.isoformat()
+
+        # Calculate auto adjustments since last manual entry
+        # Parts added = sum of parts made by upstream operations since base_ts
+        parts_added = 0
+        for up_node_id in upstream_of.get(bid, []):
+            up_machines = nodes.get(up_node_id, {}).get("machines", [])
+            for mid in up_machines:
+                # Get parts delta since base_ts
+                first = conn.execute("""
+                    SELECT good_part_count FROM machine_snapshots
+                    WHERE machine_id=? AND timestamp>=? ORDER BY id ASC LIMIT 1
+                """, (mid, base_ts)).fetchone()
+                last = conn.execute("""
+                    SELECT good_part_count FROM machine_snapshots
+                    WHERE machine_id=? AND timestamp>=? ORDER BY id DESC LIMIT 1
+                """, (mid, base_ts)).fetchone()
+                if first and last:
+                    delta = max(0, (last["good_part_count"] or 0) - (first["good_part_count"] or 0))
+                    # For series output machines, only count the last one in group
+                    cfg_m = next((m for m in cfg["machines"] if m["id"] == mid), {})
+                    if not cfg_m.get("series_output", False):
+                        parts_added += delta
+                    else:
+                        # Series output — use this as the group total
+                        parts_added = delta
+
+        # Parts consumed = total parts (good + bad) made by downstream operations since base_ts
+        # Every part taken from buffer is consumed regardless of quality outcome
+        parts_consumed = 0
+        for dn_node_id in downstream_of.get(bid, []):
+            dn_machines = nodes.get(dn_node_id, {}).get("machines", [])
+            for mid in dn_machines:
+                first = conn.execute("""
+                    SELECT good_part_count, bad_part_count FROM machine_snapshots
+                    WHERE machine_id=? AND timestamp>=? ORDER BY id ASC LIMIT 1
+                """, (mid, base_ts)).fetchone()
+                last = conn.execute("""
+                    SELECT good_part_count, bad_part_count FROM machine_snapshots
+                    WHERE machine_id=? AND timestamp>=? ORDER BY id DESC LIMIT 1
+                """, (mid, base_ts)).fetchone()
+                if first and last:
+                    good_delta = max(0, (last["good_part_count"] or 0) - (first["good_part_count"] or 0))
+                    bad_delta = max(0, (last["bad_part_count"] or 0) - (first["bad_part_count"] or 0))
+                    delta = good_delta + bad_delta
+                    cfg_m = next((m for m in cfg["machines"] if m["id"] == mid), {})
+                    if not cfg_m.get("series_output", False):
+                        parts_consumed += delta
+
+        current_count = max(0, base_count + parts_added - parts_consumed)
+
+        result.append({
+            "buffer_id": bid,
+            "label": node.get("label", bid),
+            "note": node.get("note", ""),
+            "base_count": base_count,
+            "base_timestamp": base_ts,
+            "parts_added": parts_added,
+            "parts_consumed": parts_consumed,
+            "current_count": round(current_count),
+        })
+
+    conn.close()
+    return JSONResponse(result)
+
+
+@app.post("/api/buffer_update")
+async def update_buffer(request: Request):
+    """Manual buffer count update by operator."""
+    body = await request.json()
+    buffer_id = body.get("buffer_id")
+    count = body.get("count")
+    if buffer_id is None or count is None:
+        raise HTTPException(400, "Missing buffer_id or count")
+
+    cfg = load_config()
+    now = datetime.now()
+    shift_letter, day_id, _, _ = get_shift_info(cfg, now)
+
+    conn = get_db()
+    conn.execute("""
+        INSERT INTO buffer_events (timestamp, buffer_id, count, source, shift, day_id)
+        VALUES (?, ?, ?, 'manual', ?, ?)
+    """, (now.isoformat(), buffer_id, float(count), shift_letter, day_id))
+    conn.commit()
+    conn.close()
+    return {"status": "ok", "buffer_id": buffer_id, "count": count}
+
+
+@app.get("/api/process_flow")
+async def get_process_flow():
+    """Returns process flow definition with live machine states overlaid."""
+    cfg = load_config()
+    flow = cfg.get("process_flow", {"nodes": [], "connections": []})
+
+    # Overlay live machine data
+    machines_resp = await get_machines("current")
+    import json as _json
+    machines_live = _json.loads(machines_resp.body)
+    machine_map = {m["machine_id"]: m for m in machines_live}
+
+    # Enrich operation nodes with live data
+    for node in flow.get("nodes", []):
+        if node["type"] == "operation":
+            node_machines = node.get("machines", [])
+            node["live"] = []
+            node["total_good"] = 0
+            node["total_bad"] = 0
+            for mid in node_machines:
+                if mid in machine_map:
+                    m = machine_map[mid]
+                    node["live"].append({
+                        "machine_id": mid,
+                        "machine_name": m.get("machine_name", mid),
+                        "state_id": m.get("state_id", 0),
+                        "ptpmc_category": m.get("ptpmc_category", "other"),
+                        "good_shift": m.get("good_shift", 0),
+                        "bad_shift": m.get("bad_shift", 0),
+                    })
+                    if not next((mc for mc in cfg["machines"] if mc["id"] == mid and mc.get("series_output")), None):
+                        node["total_good"] += m.get("good_shift", 0)
+                    else:
+                        node["total_good"] = m.get("good_shift", 0)
+                    node["total_bad"] += m.get("bad_shift", 0)
+
+    return JSONResponse(flow)
+@app.get("/flow", response_class=HTMLResponse)
+async def serve_flow_editor():
+    if os.path.exists(FLOW_EDITOR_FILE):
+        with open(FLOW_EDITOR_FILE, "r", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+    return HTMLResponse("<h1>flow_editor.html not found</h1>", status_code=404)
 
 
 if __name__ == "__main__":
@@ -622,3 +1058,209 @@ if __name__ == "__main__":
     port = cfg["area"]["api_port"]
     print(f"MIS API starting - Area {cfg['area']['code']} on port {port}")
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
+
+
+# -- Losses --
+@app.get("/api/losses")
+async def get_losses(shift: str = "current"):
+    """
+    Returns parts lost per machine broken down by PT-PM&C category.
+    For each machine: down_min, blocked_min, starved_min, manual_min,
+    lost_down, lost_blocked, lost_starved, lost_manual, rejects.
+    Time windows: shift, today, week.
+    """
+    cfg = load_config()
+    shift_letter, day_id, shift_start, shift_end = resolve_shift(cfg, shift)
+    s_start, s_end = shift_time_range(cfg, shift_letter, day_id)
+    if not s_start:
+        return JSONResponse([])
+
+    conn = get_db()
+    now = datetime.now()
+
+    # Today = all shifts in current day_id
+    today_start = datetime.strptime(day_id, "%Y-%m-%d").replace(hour=6, minute=0, second=0)
+    today_end = today_start + timedelta(hours=24)
+
+    # Week = last 7 days
+    week_start = now - timedelta(days=7)
+
+    result = []
+    for m in cfg["machines"]:
+        mid = m["id"]
+        rated_ct = m.get("rated_ct", 0)
+
+        def get_time_by_category(ts_start, ts_end):
+            """Sum seconds in each ptpmc_category from state_events.
+            Falls back to oee_category for records without ptpmc_category."""
+            rows = conn.execute("""
+                SELECT ptpmc_category, oee_category, state_id, timestamp
+                FROM state_events
+                WHERE machine_id=? AND timestamp>=? AND timestamp<?
+                ORDER BY timestamp ASC
+            """, (mid, ts_start.isoformat(), ts_end.isoformat())).fetchall()
+
+            times = {"alarm": 0, "blocked": 0, "starved": 0, "manual": 0, "running": 0, "dressing": 0}
+            for idx, row in enumerate(rows):
+                cat = row["ptpmc_category"]
+                # Fallback: derive from state_id or oee_category for older records
+                if not cat or cat == "other":
+                    sid = row["state_id"] or 0
+                    oee = row["oee_category"] or ""
+                    if sid in (1, 15): cat = "running"
+                    elif sid == 14: cat = "dressing"
+                    elif sid == 7: cat = "blocked"
+                    elif sid == 8: cat = "starved"
+                    elif sid in (2, 10, 13): cat = "manual"
+                    elif sid in (3, 4, 5, 6, 12): cat = "alarm"
+                    elif "productive" in oee: cat = "running"
+                    elif "unplanned" in oee: cat = "alarm"
+                    elif "planned" in oee: cat = "manual"
+                    elif "minor" in oee: cat = "blocked"
+                    else: cat = "other"
+                if cat not in times:
+                    continue
+                # Duration = time until next event or end of window
+                if idx + 1 < len(rows):
+                    next_ts = datetime.fromisoformat(rows[idx + 1]["timestamp"])
+                else:
+                    next_ts = min(datetime.fromisoformat(row["timestamp"]) + timedelta(seconds=15), ts_end)
+                cur_ts = datetime.fromisoformat(row["timestamp"])
+                dur = max(0, (next_ts - cur_ts).total_seconds())
+                times[cat] = times.get(cat, 0) + dur
+            return times
+
+        def calc_lost(seconds, rated_ct):
+            if rated_ct <= 0 or seconds <= 0:
+                return 0
+            return round(seconds / rated_ct)
+
+        # Get rejects
+        def get_rejects(ts_start, ts_end):
+            first = conn.execute("""
+                SELECT bad_part_count FROM machine_snapshots
+                WHERE machine_id=? AND timestamp>=? AND timestamp<?
+                ORDER BY id ASC LIMIT 1
+            """, (mid, ts_start.isoformat(), ts_end.isoformat())).fetchone()
+            last = conn.execute("""
+                SELECT bad_part_count FROM machine_snapshots
+                WHERE machine_id=? AND timestamp>=? AND timestamp<?
+                ORDER BY id DESC LIMIT 1
+            """, (mid, ts_start.isoformat(), ts_end.isoformat())).fetchone()
+            if first and last:
+                return max(0, (last["bad_part_count"] or 0) - (first["bad_part_count"] or 0))
+            return 0
+
+        # Shift data
+        shift_times = get_time_by_category(s_start, s_end)
+        shift_rejects = get_rejects(s_start, s_end)
+
+        # Today data
+        today_times = get_time_by_category(today_start, today_end)
+        today_rejects = get_rejects(today_start, today_end)
+
+        # Week data
+        week_times = get_time_by_category(week_start, now)
+        week_rejects = get_rejects(week_start, now)
+
+        result.append({
+            "machine_id": mid,
+            "machine_name": m["name"],
+            "op": m["op"],
+            "op_name": m.get("op_name", ""),
+            "rated_ct": rated_ct,
+            "shift": {
+                "alarm_min": round(shift_times["alarm"] / 60, 1),
+                "blocked_min": round(shift_times["blocked"] / 60, 1),
+                "starved_min": round(shift_times["starved"] / 60, 1),
+                "manual_min": round(shift_times["manual"] / 60, 1),
+                "lost_alarm": calc_lost(shift_times["alarm"], rated_ct),
+                "lost_blocked": calc_lost(shift_times["blocked"], rated_ct),
+                "lost_starved": calc_lost(shift_times["starved"], rated_ct),
+                "lost_manual": calc_lost(shift_times["manual"], rated_ct),
+                "rejects": shift_rejects,
+            },
+            "today": {
+                "alarm_min": round(today_times["alarm"] / 60, 1),
+                "blocked_min": round(today_times["blocked"] / 60, 1),
+                "starved_min": round(today_times["starved"] / 60, 1),
+                "manual_min": round(today_times["manual"] / 60, 1),
+                "lost_alarm": calc_lost(today_times["alarm"], rated_ct),
+                "lost_blocked": calc_lost(today_times["blocked"], rated_ct),
+                "lost_starved": calc_lost(today_times["starved"], rated_ct),
+                "lost_manual": calc_lost(today_times["manual"], rated_ct),
+                "rejects": today_rejects,
+            },
+            "week": {
+                "alarm_min": round(week_times["alarm"] / 60, 1),
+                "blocked_min": round(week_times["blocked"] / 60, 1),
+                "starved_min": round(week_times["starved"] / 60, 1),
+                "manual_min": round(week_times["manual"] / 60, 1),
+                "lost_alarm": calc_lost(week_times["alarm"], rated_ct),
+                "lost_blocked": calc_lost(week_times["blocked"], rated_ct),
+                "lost_starved": calc_lost(week_times["starved"], rated_ct),
+                "lost_manual": calc_lost(week_times["manual"], rated_ct),
+                "rejects": week_rejects,
+            },
+        })
+
+    conn.close()
+    return JSONResponse(result)
+
+
+# -- Tool History --
+@app.get("/api/tool_history")
+async def get_tool_history(machine_id: str = None, limit: int = 10):
+    """Tool change history with reason and notes."""
+    conn = get_db()
+    if machine_id:
+        rows = conn.execute("""
+            SELECT * FROM tool_change_events
+            WHERE machine_id=?
+            ORDER BY timestamp DESC LIMIT ?
+        """, (machine_id, limit)).fetchall()
+    else:
+        rows = conn.execute("""
+            SELECT * FROM tool_change_events
+            ORDER BY timestamp DESC LIMIT ?
+        """, (limit * 17,)).fetchall()
+
+    result = []
+    for r in rows:
+        result.append({
+            "id": r["id"],
+            "timestamp": r["timestamp"],
+            "machine_id": r["machine_id"],
+            "machine_name": r["machine_name"],
+            "op": r["op"],
+            "tool_slot": r["tool_slot"],
+            "parts_run": r["parts_run"],
+            "shift_letter": r["shift_letter"],
+            "day_id": r["day_id"],
+            "reason": r["reason"] or "tool_life_utilized",
+            "notes": r["notes"] or "",
+        })
+    conn.close()
+    return JSONResponse(result)
+
+
+# -- Update tool change reason --
+@app.post("/api/tool_change_reason")
+async def update_tool_change_reason(request: Request):
+    """Update reason and notes on a tool change event."""
+    body = await request.json()
+    event_id = body.get("id")
+    reason = body.get("reason", "tool_life_utilized")
+    notes = body.get("notes", "")
+    if not event_id:
+        raise HTTPException(400, "Missing id")
+    if reason not in ("tool_life_utilized", "other"):
+        raise HTTPException(400, "Invalid reason")
+    if len(notes) > 160:
+        notes = notes[:160]
+    conn = get_db()
+    conn.execute("UPDATE tool_change_events SET reason=?, notes=? WHERE id=?",
+                 (reason, notes, event_id))
+    conn.commit()
+    conn.close()
+    return {"status": "ok"}

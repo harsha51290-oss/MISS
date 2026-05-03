@@ -52,7 +52,7 @@ foreach ($f in $folders) {
 
 # -- Step 3: Check required files --
 Write-Host "Step 3: Checking required files..." -ForegroundColor Yellow
-$required = @("collector.py", "api.py", "backup.py", "dashboard.html", "migrate_db.py")
+$required = @("collector.py", "api.py", "backup.py", "dashboard.html", "config.html", "flow.html")
 $missing = @()
 foreach ($f in $required) {
     $path = Join-Path $AreaDir $f
@@ -92,19 +92,8 @@ catch {
     }
 }
 
-# -- Step 5: Initialise database --
-Write-Host "Step 5: Initialising database..." -ForegroundColor Yellow
-Set-Location $AreaDir
-try {
-    $result = python migrate_db.py 2>&1
-    Write-Host "  OK  Database ready" -ForegroundColor Green
-}
-catch {
-    Write-Host "  WARNING: migrate_db.py had issues" -ForegroundColor Yellow
-}
-
-# -- Step 6: Register PM2 processes --
-Write-Host "Step 6: Registering PM2 processes..." -ForegroundColor Yellow
+# -- Step 5: Register PM2 processes --
+Write-Host "Step 5: Registering PM2 processes..." -ForegroundColor Yellow
 
 $ErrorActionPreference = "SilentlyContinue"
 pm2 delete "$AreaCode-collector" 2>$null | Out-Null
@@ -125,8 +114,8 @@ catch {
     Write-Host "    python backup.py" -ForegroundColor Gray
 }
 
-# -- Step 7: Save PM2 --
-Write-Host "Step 7: Saving PM2 config..." -ForegroundColor Yellow
+# -- Step 6: Save PM2 --
+Write-Host "Step 6: Saving PM2 config..." -ForegroundColor Yellow
 $ErrorActionPreference = "SilentlyContinue"
 pm2 save 2>$null | Out-Null
 pm2-startup install 2>$null | Out-Null
@@ -142,7 +131,7 @@ Write-Host ""
 Write-Host "  Dashboard : http://localhost:${ApiPort}/dashboard" -ForegroundColor Cyan
 Write-Host "  Config    : http://localhost:${ApiPort}/config" -ForegroundColor Cyan
 Write-Host "  Health    : http://localhost:${ApiPort}/api/health" -ForegroundColor Cyan
-Write-Host "  Settings  : python localsettings.py" -ForegroundColor Cyan
+Write-Host "  Flow      : http://localhost:${ApiPort}/flow" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  PM2 status: pm2 list" -ForegroundColor Gray
 Write-Host "  View logs : pm2 logs ${AreaCode}-collector" -ForegroundColor Gray
