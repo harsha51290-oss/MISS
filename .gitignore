@@ -1,0 +1,32 @@
+# SQLite live database and write-ahead-log — never commit
+mis.db
+mis.db-wal
+mis.db-shm
+
+# Runtime state
+logs/
+backups/
+backup_status.json
+
+# Other areas' config bundle — not part of this deployment
+files.zip
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Claude Code local state
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/*
+!.vscode/settings.json

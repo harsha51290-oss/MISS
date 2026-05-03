@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manufacturing Intelligence Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gm-blue:#0033A0;--gm-blue2:#2371E7;--gm-dark:#122C6C;
+  --gm-light:#D6E5FB;--gm-lightest:#F0F5FF;
+  --black:#222;--dgray:#555;--gray:#999;
+  --lgray:#DDD;--xlgray:#F5F5F5;--white:#fff;
+  --green:#4E802D;--mgreen:#39B54A;--lgreen:#DDE7D5;
+  --red:#D2232B;--dred:#971318;--lred:#F5D6D6;--ered:#EC9B9D;
+  --yellow:#FEC710;--lyellow:#FCF1D2;--orange:#F57F20;
+}
+body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);background:var(--xlgray);min-height:100vh;display:flex;flex-direction:column}
+.gm-hdr{background:var(--gm-blue);color:white;display:flex;align-items:center;padding:0 20px;height:64px;position:sticky;top:0;z-index:200;box-shadow:0 2px 6px rgba(0,0,0,.25);gap:14px;flex-shrink:0}
+.gm-logo{background:white;color:var(--gm-blue);font-weight:900;font-size:15px;padding:4px 10px;border-radius:2px;flex-shrink:0}
+.hdr-title-main{font-size:17px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
+.hdr-title-sub{font-size:11px;color:rgba(255,255,255,.75);letter-spacing:.09em;text-transform:uppercase;margin-top:2px}
+.hdr-clock{margin-left:auto;text-align:right;flex-shrink:0}
+.hdr-time{font-family:monospace;font-size:16px;font-weight:700;color:white}
+.hdr-date{font-size:11px;color:rgba(255,255,255,.75);font-family:monospace;margin-top:1px}
+.msg-banner{padding:9px 20px;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0}
+.msg-banner.good{background:#e4f5da;color:#2d5a16;border-bottom:2px solid #b8dda0}
+.msg-banner.warn{background:var(--lyellow);color:#7a5800;border-bottom:2px solid var(--yellow)}
+.msg-banner.info{background:var(--gm-lightest);color:var(--gm-dark);border-bottom:2px solid var(--gm-light)}
+.msg-banner.break{background:#fff3e0;color:#7a3c00;border-bottom:2px solid var(--orange)}
+.plc-banner{padding:8px 20px;font-size:13px;font-weight:800;display:none;align-items:center;justify-content:center;gap:8px;background:var(--lred);color:var(--dred);border-bottom:2px solid var(--red)}
+.plc-banner.show{display:flex}
+.ctrl-bar{background:white;border-bottom:2px solid var(--lgray);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;position:sticky;top:64px;z-index:198}
+.gm-sel{background:white;border:1.5px solid var(--lgray);color:var(--black);padding:6px 10px;border-radius:2px;font-size:13px;font-weight:600;cursor:pointer}
+.gm-date{background:white;border:1.5px solid var(--lgray);color:var(--black);padding:6px 10px;border-radius:2px;font-size:13px}
+.shift-ind{display:none;background:var(--gm-lightest);border:1px solid var(--gm-light);border-radius:2px;padding:5px 10px;font-size:12px;font-weight:700;color:var(--gm-dark)}
+.shift-ind.show{display:block}
+.trades-btn{background:var(--gm-blue);color:white;border:none;padding:6px 14px;border-radius:2px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:6px}
+.trades-btn:hover{background:var(--gm-dark)}
+.trade-badge{background:var(--red);color:white;font-size:10px;padding:2px 6px;border-radius:8px;min-width:18px;text-align:center;font-weight:700}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--mgreen);display:inline-block;box-shadow:0 0 6px var(--mgreen);animation:pls 1.5s infinite}
+@keyframes pls{0%,100%{opacity:1}50%{opacity:.4}}
+.dl-btn{background:var(--green);color:white;border:none;padding:6px 14px;border-radius:2px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:6px}
+.dl-btn:hover{background:#3a6020}
+.layout{display:flex;flex:1;position:relative}
+.main{flex:1;padding:14px 20px;transition:margin-right .3s;min-width:0}
+.main.shifted{margin-right:280px}
+.sidebar{position:fixed;top:108px;right:-280px;width:280px;height:calc(100vh - 108px);background:white;border-left:1px solid var(--lgray);overflow-y:auto;transition:right .3s;z-index:97}
+.sidebar.open{right:0}
+.sb-hdr{background:var(--gm-blue);color:white;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0}
+.sb-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:8px}
+.sb-close{background:none;border:none;color:rgba(255,255,255,.85);cursor:pointer;font-size:18px}
+.sb-body{padding:10px}
+.trade-item{background:var(--xlgray);border:1px solid var(--lgray);border-left:3px solid var(--yellow);border-radius:2px;padding:9px 11px;margin-bottom:7px}
+.ti-machine{font-size:13px;font-weight:800}
+.ti-type{font-size:12px;color:var(--dgray);margin-top:2px}
+.ti-meta{display:flex;justify-content:space-between;margin-top:5px;font-size:11px;color:var(--dgray);font-family:monospace}
+.ti-dur{color:var(--orange);font-weight:700}
+.op-section{margin-bottom:14px;border-radius:3px;overflow:hidden;border:1px solid var(--lgray);box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.op-hdr{background:var(--gm-blue);color:white;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer;user-select:none}
+.op-hdr:hover{background:var(--gm-dark)}
+.op-name{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.toggle-icon{font-size:13px;font-weight:700;transition:transform .2s}
+.toggle-icon.collapsed{transform:rotate(-90deg)}
+.op-right{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.op-blk{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.op-blk-lbl{font-size:10px;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.op-blk-val{font-size:16px;font-weight:800;font-family:monospace;color:white;line-height:1}
+.op-blk-sub{font-size:11px;font-family:monospace;color:rgba(255,255,255,.8);font-weight:600}
+.prog-wrap{display:flex;align-items:center;gap:6px;margin-top:3px}
+.prog-bar{width:80px;height:7px;background:rgba(255,255,255,.2);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px}
+.prog-fill.g{background:var(--mgreen)}.prog-fill.y{background:var(--yellow)}.prog-fill.r{background:var(--red)}
+.prog-pct{font-size:13px;color:white;font-family:monospace;font-weight:800;min-width:34px}
+.op-ftq{display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.28);border-radius:3px;padding:5px 12px;min-width:76px}
+.op-ftq-val{font-size:20px;font-weight:800;font-family:monospace;line-height:1}
+.op-ftq-lbl{font-size:10px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-top:2px}
+.panel-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;font-size:11px;font-weight:700;padding:5px 11px;border-radius:2px;cursor:pointer;white-space:nowrap}
+.panel-btn:hover{background:rgba(255,255,255,.25)}
+.op-body{background:white;display:block}
+.op-body.collapsed{display:none}
+.op-panel{display:none;background:var(--xlgray);border-bottom:1px solid var(--lgray);padding:14px 16px}
+.op-panel.show{display:block}
+.panel-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.panel-title{font-size:12px;font-weight:800;color:var(--black);text-transform:uppercase;letter-spacing:.07em}
+.panel-close{background:none;border:none;color:var(--dgray);cursor:pointer;font-size:20px;line-height:1}
+.oee-grid{display:flex;flex-wrap:wrap;gap:10px}
+.oee-item{background:white;border:1px solid var(--lgray);border-radius:3px;padding:12px 16px;min-width:150px;flex:1}
+.oee-nm{font-size:12px;color:var(--dgray);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:5px}
+.oee-val{font-size:28px;font-weight:800;font-family:monospace}
+.oee-apq{font-size:11px;font-family:monospace;color:var(--dgray);margin-top:4px;font-weight:600}
+.oee-apq span{margin-right:10px}
+.chart-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.chart-title{font-size:12px;color:var(--black);margin-bottom:5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chart-row{display:flex;align-items:flex-end;gap:2px;height:70px;position:relative}
+.chart-bar{flex:1;border-radius:2px 2px 0 0;min-width:4px;max-width:16px}
+.chart-bar.good{background:var(--mgreen)}.chart-bar.below{background:var(--red)}
+.chart-tgt{position:absolute;left:0;right:0;border-top:2px dashed var(--orange);z-index:2}
+.chart-tgt-lbl{position:absolute;right:0;top:-13px;font-size:9px;color:var(--orange);font-family:monospace;font-weight:700}
+.chart-lbls{display:flex;justify-content:space-between;font-size:9px;color:var(--dgray);font-family:monospace;margin-top:3px;font-weight:600}
+.machine-grid{display:flex;flex-wrap:wrap;gap:10px;padding:12px}
+.mc{width:260px;flex:0 0 260px;border-radius:4px;overflow:hidden;border:2px solid var(--lgray);background:white;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.mc-asset{padding:9px 13px;display:flex;justify-content:space-between;align-items:baseline;color:white}
+.mc-asset-name{font-size:15px;font-weight:800}
+.mc-asset-type{font-size:12px;opacity:.88;font-weight:600}
+.mc-state-bar{padding:5px 13px;color:white;border-top:1px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:space-between}
+.mc-state-lbl{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
+.mc-state-extra{font-size:12px;font-weight:700;opacity:.95}
+.mc-body{padding:13px 15px}
+.mc-prod-row{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}
+.mc-prod-num{font-size:42px;font-weight:800;font-family:monospace;line-height:1.1}
+.mc-prod-target{font-size:15px;color:var(--dgray);font-family:monospace;font-weight:600}
+.mc-diff-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.mc-diff{font-size:13px;font-family:monospace;font-weight:800}
+.mc-attain{font-size:16px;font-family:monospace;font-weight:800}
+.mc-prog{background:var(--lgray);height:7px;border-radius:3px;margin-bottom:12px;overflow:hidden}
+.mc-prog-fill{height:100%;border-radius:3px}
+.mc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.mc-stat{text-align:center;padding:9px 4px;border:1.5px solid var(--lgray);border-radius:3px}
+.mc-stat-val{font-size:18px;font-weight:800;font-family:monospace}
+.mc-stat-lbl{font-size:12px;color:var(--dgray);text-transform:uppercase;letter-spacing:.04em;margin-top:3px;font-weight:700}
+.mc-down{background:var(--lyellow);border:1.5px solid var(--yellow);border-radius:3px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.mc-down.alert{background:var(--lred);border-color:var(--ered)}
+.mc-down-lbl{font-size:13px;font-weight:800;color:#7a5800;text-transform:uppercase;letter-spacing:.05em}
+.mc-down.alert .mc-down-lbl{color:var(--dred)}
+.mc-down-val{font-size:17px;font-weight:800;font-family:monospace;color:#7a5800}
+.mc-down.alert .mc-down-val{color:var(--dred)}
+.mc-series-note{font-size:11px;color:var(--dgray);font-style:italic;text-align:center;padding:5px 8px;background:var(--xlgray);margin-top:9px;border-radius:2px;font-weight:600;border:1px solid var(--lgray)}
+.gm-footer{background:#222;color:#888;padding:10px 24px;font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;flex-shrink:0;font-weight:600}
+</style>
+</head>
+<body>
+<header class="gm-hdr">
+  <div class="gm-logo">GM</div>
+  <div>
+    <div class="hdr-title-main">Manufacturing Intelligence Dashboard</div>
+    <div class="hdr-title-sub" id="hdrSub">Grand Rapids Operation</div>
+  </div>
+  <div class="hdr-clock">
+    <div class="hdr-time" id="clockTime">--:--:--</div>
+    <div class="hdr-date" id="clockDate">---</div>
+  </div>
+</header>
+<div class="msg-banner info" id="msgBanner">
+  <span id="msgIcon">-</span>
+  <span id="msgText">Loading shift data...</span>
+</div>
+<div class="plc-banner" id="plcBanner">&#9888; PLC CONNECTION LOST - <span id="plcDetail">checking...</span></div>
+<div class="ctrl-bar">
+  <select class="gm-sel" id="shiftSelect" onchange="handleShiftChange(this.value)" style="min-width:160px">
+    <option value="current">Current Shift</option>
+    <option value="prev1">1 Shift Back</option>
+    <option value="prev2">2 Shifts Back</option>
+    <option value="manual">Manual Selection...</option>
+  </select>
+  <input type="date" id="manualDate" class="gm-date" style="display:none" onchange="applyManual()">
+  <select id="manualShift" class="gm-sel" style="display:none;min-width:90px" onchange="applyManual()">
+    <option value="A">A Shift</option><option value="B">B Shift</option><option value="C">C Shift</option>
+  </select>
+  <div class="shift-ind" id="shiftInd"></div>
+  <button class="dl-btn" onclick="downloadExcel()">Download Excel</button>
+  <div style="margin-left:auto">
+    <button class="trades-btn" onclick="toggleSidebar()">
+      <span class="live-dot"></span> Active Trades <span class="trade-badge" id="tradeCount">0</span>
+    </button>
+  </div>
+</div>
+<div class="layout">
+<div class="main" id="mainContent">
+  <div id="content"><div style="padding:40px;text-align:center;color:var(--dgray);font-size:15px;font-weight:600">Connecting to API...</div></div>
+</div>
+<div class="sidebar" id="sidebar">
+  <div class="sb-hdr">
+    <div class="sb-title"><span class="live-dot"></span> Trade Calls <span class="trade-badge" id="sbCount">0</span></div>
+    <button class="sb-close" onclick="toggleSidebar()">X</button>
+  </div>
+  <div class="sb-body" id="tradesList">
+    <div style="font-size:13px;color:var(--dgray);text-align:center;padding:20px 0;font-weight:600">No active trade calls</div>
+  </div>
+</div>
+</div>
+<footer class="gm-footer">
+  <span style="color:#bbb;text-transform:uppercase;letter-spacing:.1em">General Motors</span>
+  <span id="footerArea">Manufacturing Intelligence Dashboard</span>
+  <span>General Motors 2026</span>
+</footer>
+
+<script>
+const API='';
+let currentShift='current';
+let sidebarOpen=false;
+let openPanels={};
+let collapsedOps={};
+let lastMachines=[];
+let lastOpTotals={};
+let lastDayTotals={};
+let CONFIG_CACHE=null;
+
+const RUNNING=new Set([1,15]);
+const FAULTED=new Set([3,4]);
+const STATE_MAP={
+  1:{lbl:'Running',clr:'#39B54A'},2:{lbl:'Stopped',clr:'#2371E7'},
+  3:{lbl:'Faulted (U)',clr:'#D2232B'},4:{lbl:'Faulted (A)',clr:'#971318'},
+  5:{lbl:'Pwr Off',clr:'#999'},6:{lbl:'E-Stop',clr:'#999'},
+  7:{lbl:'Blocked',clr:'#FEC710'},8:{lbl:'Starved',clr:'#F57F20'},
+  9:{lbl:'Paused',clr:'#954BF7'},10:{lbl:'Manual Ovr',clr:'#666'},
+  11:{lbl:'Hold',clr:'#F57F20'},12:{lbl:'Door Open',clr:'#999'},
+  13:{lbl:'Warmup',clr:'#4E802D'},14:{lbl:'Dressing',clr:'#4E802D'},
+  15:{lbl:'Partial Run',clr:'#39B54A'},
+};
+
+function si(id){return STATE_MAP[id]||{lbl:'State '+id,clr:'#999'}}
+function fmt(n){return n===null||n===undefined?'-':Number(n).toLocaleString()}
+function pctC(p){p=Number(p);return p>=90?'#4E802D':p>=70?'#F57F20':'#D2232B'}
+function fmtDown(m){if(!m||m<=0)return null;return m<60?Math.round(m)+' min':(m/60).toFixed(1)+' hrs'}
+
+// Clock
+setInterval(()=>{
+  const n=new Date();
+  document.getElementById('clockTime').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('clockDate').textContent=days[n.getDay()]+', '+months[n.getMonth()]+' '+n.getDate()+', '+n.getFullYear();
+},1000);
+
+// Load config once for machine metadata
+async function loadConfig(){
+  if(CONFIG_CACHE) return CONFIG_CACHE;
+  try{
+    const r=await fetch(API+'/api/config');
+    CONFIG_CACHE=await r.json();
+    // Update header
+    const a=CONFIG_CACHE.area;
+    document.getElementById('hdrSub').textContent='Grand Rapids Operation - Dept '+a.dept+' - '+a.name;
+    document.title='MIS - '+a.code+' '+a.name;
+    document.getElementById('footerArea').textContent='Manufacturing Intelligence Dashboard - Grand Rapids - '+a.dept+' - '+a.name;
+  }catch(e){CONFIG_CACHE={area:{},machines:[],breaks:{},support_codes:{}};}
+  return CONFIG_CACHE;
+}
+
+async function loadDayTotals(){
+  try{const r=await fetch(API+'/api/day_totals');return await r.json();}
+  catch(e){return{totals:{},day_id:'',shifts:[]};}
+}
+
+// Shift selector
+function handleShiftChange(val){
+  document.getElementById('manualDate').style.display='none';
+  document.getElementById('manualShift').style.display='none';
+  document.getElementById('shiftInd').classList.remove('show');
+  if(val==='manual'){
+    document.getElementById('manualDate').style.display='inline-block';
+    document.getElementById('manualShift').style.display='inline-block';
+    document.getElementById('manualDate').value=new Date().toISOString().slice(0,10);
+    document.getElementById('shiftInd').className='shift-ind show';
+    document.getElementById('shiftInd').textContent='Manual - pick date and shift';
+    currentShift='manual';return;
+  }
+  if(val==='prev1'){document.getElementById('shiftInd').className='shift-ind show';document.getElementById('shiftInd').textContent='Viewing: 1 Shift Back';}
+  if(val==='prev2'){document.getElementById('shiftInd').className='shift-ind show';document.getElementById('shiftInd').textContent='Viewing: 2 Shifts Back';}
+  currentShift=val;loadAll();
+}
+function applyManual(){
+  const d=document.getElementById('manualDate').value;
+  const s=document.getElementById('manualShift').value;
+  if(d&&s){document.getElementById('shiftInd').textContent=d+' - '+s+' Shift';currentShift='manual_'+d+'_'+s;loadAll();}
+}
+function shiftLabel(){
+  const v=document.getElementById('shiftSelect').value;
+  if(v==='current')return 'Current Shift';
+  if(v==='prev1')return '1 Shift Back';
+  if(v==='prev2')return '2 Shifts Back';
+  return document.getElementById('manualShift').value+' Shift - '+document.getElementById('manualDate').value;
+}
+
+// Banner
+function updateBanner(machines){
+  if(!machines||!machines.length){setMsg('info','-','Connecting to PLC...');return;}
+  const n=new Date(),h=n.getHours();
+  const cfg=CONFIG_CACHE||{breaks:{}};
+  const breaks=cfg.breaks||{};
+  const ss=h>=6&&h<14?6:h>=14&&h<22?14:22;
+  const shiftHour=Math.min(8,Math.floor(((h-ss+24)%24))+1);
+  const breakMins=breaks[String(shiftHour)]||0;
+  if(breakMins>0&&n.getMinutes()<6){
+    const lbl=breakMins>=30?'30 min lunch':breakMins>=20?'20 min break':breakMins+' min break';
+    setMsg('break','',lbl+'! Great work this hour, take a rest.');return;
+  }
+  const good=machines.reduce((s,m)=>s+(m.good_shift||0),0);
+  const exp=machines.reduce((s,m)=>s+(m.expected_now||0),0);
+  const faulted=machines.filter(m=>FAULTED.has(m.state_id||0)).length;
+  const running=machines.filter(m=>RUNNING.has(m.state_id||0)).length;
+  const pct=exp>0?(good/exp*100):0;
+  if(faulted>=3){setMsg('warn','',faulted+' machines currently faulted - trades are being contacted.');return;}
+  if(pct>=100){setMsg('good','','Outstanding! Running ahead of target - excellent work team!');return;}
+  if(pct>=95){setMsg('good','','Excellent pace - '+pct.toFixed(0)+'% attainment. Keep pushing!');return;}
+  if(pct>=85){setMsg('good','','Good pace - '+running+' of '+machines.length+' machines running at '+pct.toFixed(0)+'%.');return;}
+  if(pct>=70){setMsg('warn','','Running at '+pct.toFixed(0)+'% - close the gap before end of shift.');return;}
+  setMsg('warn','','Behind at '+pct.toFixed(0)+'% - prioritise getting faulted equipment back online.');
+}
+function setMsg(type,icon,text){
+  const b=document.getElementById('msgBanner');b.className='msg-banner '+type;
+  document.getElementById('msgIcon').textContent=icon;document.getElementById('msgText').textContent=text;
+}
+
+// Machine tile
+function buildTile(m,cfgM){
+  const sid=m.state_id||0;const s=si(sid);
+  const isRunning=RUNNING.has(sid);const isFaulted=FAULTED.has(sid);
+  const alarm=(!isRunning&&isFaulted&&(m.alarm_code||0)>0)?m.alarm_code:0;
+  const cfg=CONFIG_CACHE||{support_codes:{}};
+  const sc=cfg.support_codes||{};
+  const trade=(m.support_call||0)>0?(sc[String(m.support_call)]||{}).short||'Trade Call':null;
+  let stateExtra='';
+  if(alarm>0)stateExtra='Alarm '+alarm;
+  else if(trade)stateExtra=trade;
+  const good=m.good_shift||0,exp=m.expected_now||0,bad=m.bad_shift||0;
+  const diff=good-exp;const attain=exp>0?Math.round(good/exp*100):0;
+  const ftq=(good+bad)>0?((good/(good+bad))*100).toFixed(1):'-';
+  const tgt=m.shift_target||0;
+  const progPct=tgt>0?Math.min(100,Math.round(good/tgt*100)):0;
+  const actClr=diff>=0?'#4E802D':diff>-50?'#F57F20':'#D2232B';
+  const diffTxt=diff>=0?'+ '+fmt(diff)+' ahead':'- '+fmt(Math.abs(diff))+' behind';
+  const progClr=attain>=90?'#39B54A':attain>=70?'#F57F20':'#D2232B';
+  const rated=cfgM?.rated_ct||m.rated_ct||0;
+  let ctVal='-',ctClr='#999';
+  const totalParts=(m.good_shift||0)+(m.bad_shift||0);
+  if(m.avg_ct&&m.avg_ct>0&&totalParts>=3){
+    if(rated>0&&m.avg_ct<=rated*8){
+      ctVal=m.avg_ct.toFixed(1)+'s';
+      ctClr=m.avg_ct<=rated?'#4E802D':m.avg_ct<=rated*1.5?'#F57F20':'#D2232B';
+    }
+  }
+  const downStr=fmtDown(m.down_minutes);
+  const isSeries=cfgM?.series_output&&!m.series_output;
+  const t=document.createElement('div');t.className='mc';t.style.borderColor=s.clr;
+  t.innerHTML=
+    '<div class="mc-asset" style="background:'+s.clr+'"><span class="mc-asset-name">'+(m.machine_name||m.machine_id)+'</span><span class="mc-asset-type">'+(cfgM?.op_name||'')+'</span></div>'+
+    '<div class="mc-state-bar" style="background:'+s.clr+'"><span class="mc-state-lbl">'+s.lbl+'</span><span class="mc-state-extra">'+stateExtra+'</span></div>'+
+    '<div class="mc-body">'+
+    '<div class="mc-prod-row"><span class="mc-prod-num" style="color:'+actClr+'">'+fmt(good)+'</span><span class="mc-prod-target">/ '+fmt(tgt)+'</span></div>'+
+    '<div class="mc-diff-row"><span class="mc-diff" style="color:'+actClr+'">'+diffTxt+'</span><span class="mc-attain" style="color:'+pctC(attain)+'">'+attain+'%</span></div>'+
+    '<div class="mc-prog"><div class="mc-prog-fill" style="width:'+progPct+'%;background:'+progClr+'"></div></div>'+
+    '<div class="mc-stats">'+
+    '<div class="mc-stat"><div class="mc-stat-val" style="color:#D2232B">'+fmt(bad)+'</div><div class="mc-stat-lbl">Rejects</div></div>'+
+    '<div class="mc-stat"><div class="mc-stat-val" style="color:'+ctClr+'">'+ctVal+'</div><div class="mc-stat-lbl">CT</div></div>'+
+    '<div class="mc-stat"><div class="mc-stat-val" style="color:'+pctC(ftq)+'">'+ftq+'%</div><div class="mc-stat-lbl">FTQ</div></div>'+
+    '</div>'+
+    (downStr?'<div class="mc-down'+((m.down_minutes||0)>60?' alert':'')+'"><span class="mc-down-lbl">Down</span><span class="mc-down-val">'+downStr+'</span></div>':'')+
+    (isSeries?'<div class="mc-series-note">Series feeder - op total = last machine output</div>':'')+
+    '</div>';
+  return t;
+}
+
+// OP section builder - uses op_name as the group key
+function buildOP(opName,machines,opTotals,dayTotals){
+  const ot=opTotals[opName]||{good:0,bad:0,expected:0,pct:0,shift_target:0};
+  const dt=(dayTotals.totals||{})[opName]||{good:0,bad:0};
+  const pct=Number(ot.pct||0);
+  const pfC=pct>=90?'g':pct>=70?'y':'r';
+  const shTgt=ot.shift_target||0;
+  const dayTgt=shTgt*3;
+  const sg=Number(ot.good||0),sb=Number(ot.bad||0);
+  const shFtq=(sg+sb)>0?((sg/(sg+sb))*100).toFixed(1):'-';
+  const shFtqC=Number(shFtq)>=99?'#39B54A':Number(shFtq)>=97?'#F57F20':'#D2232B';
+  const dg=Number(dt.good||0),db=Number(dt.bad||0);
+  const dayFtq=(dg+db)>0?((dg/(dg+db))*100).toFixed(1):'-';
+  const dayFtqC=Number(dayFtq)>=99?'#39B54A':Number(dayFtq)>=97?'#F57F20':'#D2232B';
+  const dpct=dayTgt>0?Math.round(dg/dayTgt*100):0;
+  const opKey=opName.replace(/[^a-zA-Z0-9]/g,'_');
+  const dayLbl=dayTotals.day_id?'Day '+dayTotals.day_id+' ('+(dayTotals.shifts||[]).join('+')+')':'Day';
+
+  const sec=document.createElement('div');sec.className='op-section';
+  sec.innerHTML=
+    '<div class="op-hdr" onclick="toggleOp(\''+opKey+'\')">'+
+    '<span class="op-name">'+opName+'</span>'+
+    '<span class="toggle-icon" id="op-icon-'+opKey+'">&#9660;</span>'+
+    '<div class="op-right">'+
+    '<div class="op-blk"><span class="op-blk-lbl">Shift</span><span class="op-blk-val">'+fmt(sg)+' / '+fmt(shTgt)+'</span>'+
+    '<div class="prog-wrap"><div class="prog-bar"><div class="prog-fill '+pfC+'" style="width:'+Math.min(100,pct)+'%"></div></div><span class="prog-pct">'+pct+'%</span></div></div>'+
+    '<div class="op-ftq" onclick="event.stopPropagation()"><span class="op-ftq-val" style="color:'+shFtqC+'">'+shFtq+'%</span><span class="op-ftq-lbl">Shift FTQ</span></div>'+
+    '<div class="op-blk"><span class="op-blk-lbl">'+dayLbl+'</span><span class="op-blk-val">'+fmt(dg)+' / '+fmt(dayTgt)+'</span>'+
+    '<span class="op-blk-sub" style="color:'+pctC(dpct)+'">'+dpct+'% of daily target</span></div>'+
+    '<div class="op-ftq" onclick="event.stopPropagation()"><span class="op-ftq-val" style="color:'+dayFtqC+'">'+dayFtq+'%</span><span class="op-ftq-lbl">Day FTQ</span></div>'+
+    '<div style="display:flex;gap:6px" onclick="event.stopPropagation()">'+
+    '<button class="panel-btn" onclick="event.stopPropagation();togglePanel(\'trend-'+opKey+'\',\''+opName+'\',\'trend\')">Hourly</button>'+
+    '<button class="panel-btn" onclick="event.stopPropagation();togglePanel(\'oee-'+opKey+'\',\''+opName+'\',\'oee\')">OEE</button>'+
+    '<button class="panel-btn" onclick="event.stopPropagation();togglePanel(\'tools-'+opKey+'\',\''+opName+'\',\'tools\')">Tools</button>'+
+    '</div></div></div>'+
+    '<div class="op-body" id="op-body-'+opKey+'">'+
+    '<div class="op-panel" id="trend-'+opKey+'"></div>'+
+    '<div class="op-panel" id="oee-'+opKey+'"></div>'+
+    '<div class="op-panel" id="tools-'+opKey+'"></div>'+
+    '<div class="machine-grid" id="mg-'+opKey+'"></div></div>';
+
+  const mg=sec.querySelector('#mg-'+opKey);
+  const cfgMachines=(CONFIG_CACHE||{}).machines||[];
+  machines.forEach(m=>{
+    const cfgM=cfgMachines.find(c=>c.id===m.machine_id);
+    mg.appendChild(buildTile(m,cfgM));
+  });
+  return sec;
+}
+
+function toggleOp(opKey){
+  collapsedOps[opKey]=!collapsedOps[opKey];
+  const b=document.getElementById('op-body-'+opKey);if(b)b.classList.toggle('collapsed',collapsedOps[opKey]);
+  const i=document.getElementById('op-icon-'+opKey);if(i)i.classList.toggle('collapsed',collapsedOps[opKey]);
+}
+
+// Panels
+function buildOeePanel(opKey,opName,machines){
+  let h='<div class="panel-hd"><span class="panel-title">OEE - '+opName+'</span><button class="panel-close" onclick="closePanel(\'oee-'+opKey+'\')">X</button></div><div class="oee-grid">';
+  machines.forEach(m=>{
+    const s=si(m.state_id||0);
+    const oee=m.oee!=null?m.oee.toFixed(1)+'%':'-';
+    const a=m.availability!=null?(m.availability*100).toFixed(1):'-';
+    const p=m.performance!=null?(m.performance*100).toFixed(1):'-';
+    const q=m.quality!=null?(m.quality*100).toFixed(1):'-';
+    const clr=m.oee!=null?pctC(m.oee):'#999';
+    h+='<div class="oee-item" style="border-left:4px solid '+s.clr+'"><div class="oee-nm">'+(m.machine_name||m.machine_id)+'</div><div class="oee-val" style="color:'+clr+'">'+oee+'</div><div class="oee-apq"><span>A: '+a+'%</span><span>P: '+p+'%</span><span>Q: '+q+'%</span></div></div>';
+  });
+  return h+'</div>';
+}
+function buildTrendPanel(opKey,opName,machines){
+  let h='<div class="panel-hd"><span class="panel-title">Hourly Production - '+opName+'</span><button class="panel-close" onclick="closePanel(\'trend-'+opKey+'\')">X</button></div><div class="chart-wrap">';
+  machines.forEach(m=>{
+    const hrs=m.hourly_data||[];const tgt=m.hourly_target||0;
+    const maxV=Math.max(...hrs.map(h=>h.parts||0),tgt,1);
+    const tgtP=Math.round(tgt/maxV*100);
+    h+='<div><div class="chart-title">'+(m.machine_name||m.machine_id)+'</div><div class="chart-row"><div class="chart-tgt" style="bottom:'+tgtP+'%"><span class="chart-tgt-lbl">'+tgt+'</span></div>';
+    hrs.forEach(hd=>{const p=Math.round((hd.parts||0)/maxV*100);h+='<div class="chart-bar '+((hd.parts||0)>=tgt?'good':'below')+'" style="height:'+Math.max(3,p)+'%" title="Hr '+hd.hour+': '+hd.parts+'"></div>';});
+    const lbls=hrs.map(h=>h.hour);
+    h+='</div><div class="chart-lbls"><span>'+(lbls[0]||'')+'</span><span>'+(lbls[lbls.length-1]||'')+'</span></div></div>';
+  });
+  return h+'</div>';
+}
+async function getMachinesForOp(opName){
+  try{
+    const[mr,tr]=await Promise.all([fetch(API+'/api/machines?shift='+currentShift),fetch(API+'/api/hourly_trend?shift='+currentShift)]);
+    const all=await mr.json();const td=await tr.json();
+    const hm={};td.forEach(r=>{if(!hm[r.machine_id])hm[r.machine_id]=[];hm[r.machine_id].push({hour:r.hour,parts:r.parts});});
+    return all.filter(m=>m.op_name===opName).map(m=>({...m,hourly_data:hm[m.machine_id]||[]}));
+  }catch(e){return[];}
+}
+async function showOee(opKey,opName){const p=document.getElementById('oee-'+opKey);const m=await getMachinesForOp(opName);p.innerHTML=buildOeePanel(opKey,opName,m);p.classList.add('show');openPanels['oee-'+opKey]={type:'oee',opKey,opName};}
+async function showTrend(opKey,opName){const p=document.getElementById('trend-'+opKey);const m=await getMachinesForOp(opName);p.innerHTML=buildTrendPanel(opKey,opName,m);p.classList.add('show');openPanels['trend-'+opKey]={type:'trend',opKey,opName};}
+async function showTools(opKey,opName){
+  const panel=document.getElementById('tools-'+opKey);
+  try{
+    const[machRes,toolRes]=await Promise.all([fetch(API+'/api/machines?shift=current'),fetch(API+'/api/tool_current')]);
+    const machines=await machRes.json();const toolData=await toolRes.json();
+    const opTools=toolData.filter(t=>t.op_name===opName);
+    if(!opTools.length){panel.innerHTML='<div class="panel-hd"><span class="panel-title">Tool Counters - '+opName+'</span><button class="panel-close" onclick="closePanel(\'tools-'+opKey+'\')">X</button></div><div style="color:var(--dgray);padding:16px;font-size:13px;font-weight:600">No tool data available yet</div>';panel.classList.add('show');return;}
+    let h='<div class="panel-hd"><span class="panel-title">Tool Counters - '+opName+'</span><button class="panel-close" onclick="closePanel(\'tools-'+opKey+'\')">X</button></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px">';
+    opTools.forEach(t=>{
+      const activeCols=t.tools.filter(tl=>tl.avg_life>0||tl.count>0);const cols=activeCols.length||1;
+      h+='<div style="background:white;border:1px solid var(--lgray);border-radius:3px;padding:10px 14px;min-width:200px;flex:1"><div style="font-size:12px;font-weight:800;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--lgray)">'+t.machine_name+'</div><div style="display:grid;grid-template-columns:repeat('+Math.min(cols,4)+',1fr);gap:6px">';
+      t.tools.forEach((tl,idx)=>{
+        if(tl.count===0&&tl.avg_life===0)return;
+        const pct=tl.pct_used;const clr=pct>=90?'var(--red)':pct>=70?'var(--orange)':'var(--green)';const barPct=Math.min(100,pct||0);
+        h+='<div style="text-align:center;padding:6px 4px;border:1px solid var(--lgray);border-radius:3px"><div style="font-size:10px;font-weight:700;color:var(--dgray);text-transform:uppercase;margin-bottom:4px">T'+idx+'</div><div style="font-size:18px;font-weight:800;font-family:monospace;color:'+clr+'">'+tl.count.toLocaleString()+'</div><div style="font-size:10px;color:var(--dgray);margin:2px 0">'+(tl.avg_life>0?'avg '+tl.avg_life.toLocaleString():'no avg yet')+'</div>'+(tl.avg_life>0?'<div style="background:var(--lgray);height:4px;border-radius:2px;margin-top:4px;overflow:hidden"><div style="width:'+barPct+'%;height:100%;background:'+clr+';border-radius:2px"></div></div><div style="font-size:10px;font-weight:700;color:'+clr+';margin-top:2px">'+pct+'% used</div>':'')+'</div>';
+      });
+      h+='</div></div>';
+    });
+    h+='</div>';panel.innerHTML=h;panel.classList.add('show');openPanels['tools-'+opKey]={type:'tools',opKey,opName};
+  }catch(e){panel.innerHTML='<div style="padding:16px;color:var(--red);font-weight:600">Could not load tool data</div>';panel.classList.add('show');}
+}
+function closePanel(id){const p=document.getElementById(id);if(!p)return;p.classList.remove('show');p.innerHTML='';delete openPanels[id];}
+function togglePanel(panelId,opName,type){
+  const panel=document.getElementById(panelId);if(!panel)return;
+  const opKey=panelId.split('-').slice(1).join('-');
+  if(panel.classList.contains('show')){closePanel(panelId);}
+  else{if(type==='trend')showTrend(opKey,opName);else if(type==='oee')showOee(opKey,opName);else if(type==='tools')showTools(opKey,opName);}
+}
+
+// Excel download
+async function downloadExcel(){
+  if(!lastMachines.length){alert('No data loaded.');return;}
+  const wb=XLSX.utils.book_new();const label=shiftLabel();const cfgM=(CONFIG_CACHE||{}).machines||[];
+  const machRows=lastMachines.map(m=>{
+    const c=cfgM.find(x=>x.id===m.machine_id);const g=m.good_shift||0,b=m.bad_shift||0;
+    const ftq=(g+b)>0?((g/(g+b))*100).toFixed(1)+'%':'-';const s=si(m.state_id||0);
+    return{'Machine ID':m.machine_id,'Machine':m.machine_name||'','Op Name':m.op_name||'','State':s.lbl,'Good Parts':g,'Shift Target':m.shift_target||'','Attain %':(m.expected_now||0)>0?Math.round(g/m.expected_now*100)+'%':'-','Rejects':b,'FTQ %':ftq,'OEE %':m.oee!=null?m.oee.toFixed(1)+'%':'-','Down (min)':m.down_minutes||0};
+  });
+  const ws1=XLSX.utils.json_to_sheet(machRows);XLSX.utils.book_append_sheet(wb,ws1,'Machine Summary');
+  const opRows=Object.entries(lastOpTotals).map(([name,ot])=>{
+    const dt=(lastDayTotals.totals||{})[name]||{};const g=Number(ot.good||0),b=Number(ot.bad||0);const dg=Number(dt.good||0),db=Number(dt.bad||0);
+    return{'Op Name':name,'Shift':label,'Shift Good':g,'Shift Target':ot.shift_target||0,'Shift Attain %':ot.pct+'%','Shift FTQ %':(g+b)>0?((g/(g+b))*100).toFixed(1)+'%':'-','Day Good':dg,'Daily Target':(ot.shift_target||0)*3,'Day FTQ %':(dg+db)>0?((dg/(dg+db))*100).toFixed(1)+'%':'-'};
+  });
+  const ws2=XLSX.utils.json_to_sheet(opRows);XLSX.utils.book_append_sheet(wb,ws2,'OP Summary');
+  const areaName=(CONFIG_CACHE||{}).area?.name||'Area';
+  XLSX.writeFile(wb,areaName.replace(/[^a-zA-Z0-9]/g,'_')+'_'+label.replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+// Main load
+async function loadAll(){
+  try{
+    await loadConfig();
+    const[machRes,opsRes,tradesRes,trendRes,dayRes]=await Promise.all([
+      fetch(API+'/api/machines?shift='+currentShift),
+      fetch(API+'/api/op_totals?shift='+currentShift),
+      fetch(API+'/api/active_trades'),
+      fetch(API+'/api/hourly_trend?shift='+currentShift),
+      loadDayTotals(),
+    ]);
+    const machines=await machRes.json();const opTotals=await opsRes.json();
+    const trades=await tradesRes.json();const trendData=await trendRes.json();
+    const dayTotals=dayRes;
+    lastMachines=machines;lastOpTotals=opTotals;lastDayTotals=dayTotals;
+
+    const hm={};trendData.forEach(r=>{if(!hm[r.machine_id])hm[r.machine_id]=[];hm[r.machine_id].push({hour:r.hour,parts:r.parts});});
+    machines.forEach(m=>{m.hourly_data=hm[m.machine_id]||[];});
+
+    // Group machines by op_name (from API response)
+    const opGroups={};const opOrder=[];
+    machines.forEach(m=>{
+      const key=m.op_name;
+      if(!opGroups[key]){opGroups[key]=[];opOrder.push(key);}
+      opGroups[key].push(m);
+    });
+
+    // Trades sidebar
+    const tc=trades.length;
+    document.getElementById('tradeCount').textContent=tc;
+    document.getElementById('sbCount').textContent=tc;
+    document.getElementById('tradesList').innerHTML=tc===0
+      ?'<div style="font-size:13px;color:var(--dgray);text-align:center;padding:20px 0;font-weight:600">No active trade calls</div>'
+      :trades.map(t=>'<div class="trade-item"><div class="ti-machine">'+t.machine_name+'</div><div class="ti-type">'+t.support_short+'</div><div class="ti-meta"><span>'+t.called_at+'</span><span class="ti-dur">'+t.duration_min+' min</span></div></div>').join('');
+
+    // Build content
+    const content=document.getElementById('content');content.innerHTML='';
+    opOrder.forEach(opName=>{
+      const opKey=opName.replace(/[^a-zA-Z0-9]/g,'_');
+      const sec=buildOP(opName,opGroups[opName],opTotals,dayTotals);
+      if(collapsedOps[opKey]){
+        const b=sec.querySelector('#op-body-'+opKey);if(b)b.classList.add('collapsed');
+        const i=sec.querySelector('#op-icon-'+opKey);if(i)i.classList.add('collapsed');
+      }
+      content.appendChild(sec);
+    });
+
+    // Re-open panels that were open
+    for(const[key,info] of Object.entries(openPanels)){
+      if(info.type==='trend')showTrend(info.opKey,info.opName);
+      else if(info.type==='oee')showOee(info.opKey,info.opName);
+    }
+
+    updateBanner(machines);
+
+    // Check PLC connection status
+    try{
+      const plcRes=await fetch(API+'/api/plc_status');
+      const plcs=await plcRes.json();
+      const failed=plcs.filter(p=>p.consecutive_fails>0);
+      const pb=document.getElementById('plcBanner');
+      if(failed.length>0){
+        document.getElementById('plcDetail').textContent=failed.map(p=>p.ip+' ('+p.consecutive_fails+' fails)').join(', ');
+        pb.classList.add('show');
+      }else{pb.classList.remove('show');}
+    }catch(e){}
+
+  }catch(e){
+    console.error(e);
+    document.getElementById('content').innerHTML='<div style="padding:40px;text-align:center"><div style="background:var(--lred);border:1px solid var(--ered);border-radius:3px;padding:24px;max-width:420px;margin:0 auto"><div style="font-size:16px;font-weight:800;color:var(--dred);margin-bottom:6px">Cannot connect to API</div><div style="font-size:13px;color:var(--dgray);font-weight:600">Make sure api.py is running</div></div></div>';
+  }
+}
+
+function toggleSidebar(){
+  sidebarOpen=!sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('open',sidebarOpen);
+  document.getElementById('mainContent').classList.toggle('shifted',sidebarOpen);
+}
+
+document.getElementById('manualDate').value=new Date().toISOString().slice(0,10);
+loadAll();
+setInterval(loadAll,15000);
+setInterval(()=>{updateBanner(lastMachines);},60000);
+</script>
+</body>
+</html>
