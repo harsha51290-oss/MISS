@@ -1,0 +1,315 @@
+{
+  "area": {
+    "code": "102",
+    "name": "Body Hard End",
+    "dept": "DEAC - PH Hard",
+    "plant": "Grand Rapids Operation",
+    "api_port": 8001,
+    "miss_pc": "GRO-909MISS-PC01"
+  },
+  "local": {
+    "scan_intervals": {
+      "tier1_sec": 1,
+      "tier2_sec": 15
+    },
+    "down_timers": {
+      "down_confirm_sec": 20,
+      "recover_confirm_sec": 60
+    },
+    "tool_change_threshold": 50,
+    "consecutive_good_target": 10
+  },
+  "shifts": {
+    "C": {
+      "start": "22:00",
+      "end": "06:00"
+    },
+    "A": {
+      "start": "06:00",
+      "end": "14:00"
+    },
+    "B": {
+      "start": "14:00",
+      "end": "22:00"
+    }
+  },
+  "breaks": {
+    "1": 0,
+    "2": 0,
+    "3": 12,
+    "4": 0,
+    "5": 30,
+    "6": 0,
+    "7": 12,
+    "8": 0
+  },
+  "support_codes": {
+    "0": {
+      "short": "--",
+      "full": "No Call"
+    },
+    "1": {
+      "short": "Die Maker",
+      "full": "Calling Die Maker Support"
+    },
+    "2": {
+      "short": "Electrical",
+      "full": "Calling Electrical Support"
+    },
+    "3": {
+      "short": "Mechanical",
+      "full": "Calling Mechanical Support"
+    },
+    "4": {
+      "short": "MC-Mach Repair",
+      "full": "Calling Mechanical - Machine Repair Support"
+    },
+    "5": {
+      "short": "MC-Millwright",
+      "full": "Calling Mechanical - Millwright Support"
+    },
+    "6": {
+      "short": "MC-Pipe Fitter",
+      "full": "Calling Mechanical - Pipe Fitter Support"
+    },
+    "7": {
+      "short": "MC-Tool Maker",
+      "full": "Calling Mechanical - Tool Maker Support"
+    },
+    "8": {
+      "short": "Multi-Skilled",
+      "full": "Calling Multi-Skilled Support"
+    },
+    "9": {
+      "short": "Operator",
+      "full": "Calling Operator Production Support"
+    },
+    "10": {
+      "short": "Specialist",
+      "full": "Calling Specialist Support"
+    }
+  },
+  "machines": [
+    {
+      "id": "BH_ODG1",
+      "name": "OD Grind 1",
+      "op": "170",
+      "op_name": "Body Finish OD Grind",
+      "udt_tag": "MIS_ODGrind_1",
+      "rated_ct": 1.1,
+      "shift_target": 18226,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_ODG2",
+      "name": "OD Grind 2",
+      "op": "170",
+      "op_name": "Body Finish OD Grind",
+      "udt_tag": "MIS_ODGrind_2",
+      "rated_ct": 1.1,
+      "shift_target": 18226,
+      "series_output": true,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_CHC1",
+      "name": "CHC North",
+      "op": "180",
+      "op_name": "Body Crosshole Checker",
+      "udt_tag": "MIS_CHC_N",
+      "rated_ct": 1.7,
+      "shift_target": 9113,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_CHC2",
+      "name": "CHC South",
+      "op": "180",
+      "op_name": "Body Crosshole Checker",
+      "udt_tag": "MIS_CHC_S",
+      "rated_ct": 1.7,
+      "shift_target": 9113,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA1A",
+      "name": "UVA 1-A",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_1A",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA1B",
+      "name": "UVA 1-B",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_1B",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA2A",
+      "name": "UVA 2-A",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_2A",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA2B",
+      "name": "UVA 2-B",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_2B",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA3A",
+      "name": "UVA 3-A",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_3A",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA3B",
+      "name": "UVA 3-B",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_3B",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH1",
+      "name": "Bahmueller 1",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_1",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH2",
+      "name": "Bahmueller 2",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_2",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH3",
+      "name": "Bahmueller 3",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_3",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH4",
+      "name": "Bahmueller 4",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_4",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH5",
+      "name": "Bahmueller 5",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_5",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH6",
+      "name": "Bahmueller 6",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_6",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH7",
+      "name": "Bahmueller 7",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_7",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    }
+  ]
+}
