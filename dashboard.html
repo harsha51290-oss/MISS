@@ -654,13 +654,18 @@ function buildLossCard(m,window){
   const d=m[window]||{};
   const ptpmc=m.ptpmc_category||ptpmcFromState(m.state_id||0);
   const clr=PTPMC_COLORS[ptpmc]||PTPMC_COLORS.other;
-  const totalLost=(d.lost_alarm||0)+(d.lost_blocked||0)+(d.lost_starved||0)+(d.lost_manual||0)+(d.rejects||0);
+  const totalLost=(d.lost_alarm||0)+(d.lost_blocked||0)+(d.lost_starved||0)+(d.lost_manual||0)+(d.rejects||0)+(d.overtime_lost||0);
+  const actualCt=(d.parts_made&&d.run_min)?(d.run_min*60/d.parts_made).toFixed(2):'—';
   return `<div class="loss-card">
     <div class="loss-hdr" style="background:${clr}">
       <span class="loss-name">${m.machine_name}</span>
       <span class="loss-op">${m.op_name||''}</span>
     </div>
     <div class="loss-body">
+      <div class="loss-row" style="border-bottom:1px solid var(--xlgray);padding-bottom:4px;margin-bottom:4px">
+        <span class="loss-cat" style="font-weight:800">Parts Made</span>
+        <span style="font-weight:800;font-size:14px">${fmt(d.parts_made||0)}</span>
+      </div>
       <div class="loss-row">
         <span class="loss-cat"><span class="loss-dot" style="background:#D32F2F"></span>Alarm/Down</span>
         <span><span class="loss-val" style="color:#D32F2F">${fmt(d.lost_alarm||0)}</span> <span class="loss-min">pts · ${d.alarm_min||0} min</span></span>
@@ -676,6 +681,10 @@ function buildLossCard(m,window){
       <div class="loss-row">
         <span class="loss-cat"><span class="loss-dot" style="background:#F9A825"></span>Manual</span>
         <span><span class="loss-val" style="color:#F9A825">${fmt(d.lost_manual||0)}</span> <span class="loss-min">pts · ${d.manual_min||0} min</span></span>
+      </div>
+      <div class="loss-row">
+        <span class="loss-cat"><span class="loss-dot" style="background:#E91E90"></span>Overtime</span>
+        <span><span class="loss-val" style="color:#E91E90">${fmt(d.overtime_lost||0)}</span> <span class="loss-min">pts · CT ${actualCt}s vs ${m.rated_ct}s</span></span>
       </div>
       <div class="loss-row">
         <span class="loss-cat"><span class="loss-dot" style="background:#7B1FA2"></span>Rejects</span>
@@ -752,6 +761,7 @@ function renderLosses(){
   html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#1565C0"></span>Blocked</span>';
   html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#9E9E9E"></span>Starved</span>';
   html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#F9A825"></span>Manual</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#E91E90"></span>Overtime</span>';
   html+='</div>';
 
   if(lossView==='cards'){
@@ -795,12 +805,15 @@ function downloadLosses(){
     const d=m[w]||m.shift||{};
     return{
       'Machine ID':m.machine_id,'Machine':m.machine_name,'Operation':m.op_name||m.op,
+      'Rated CT (s)':m.rated_ct||0,'Parts Made':d.parts_made||0,'Run Time (min)':d.run_min||0,
+      'Actual CT (s)':(d.parts_made&&d.run_min)? +(d.run_min*60/d.parts_made).toFixed(2):0,
       'Alarm/Down (min)':d.alarm_min||0,'Alarm Lost (pts)':d.lost_alarm||0,
       'Blocked (min)':d.blocked_min||0,'Blocked Lost (pts)':d.lost_blocked||0,
       'Starved (min)':d.starved_min||0,'Starved Lost (pts)':d.lost_starved||0,
       'Manual (min)':d.manual_min||0,'Manual Lost (pts)':d.lost_manual||0,
+      'Overtime Lost (pts)':d.overtime_lost||0,
       'Rejects':d.rejects||0,
-      'Total Lost':(d.lost_alarm||0)+(d.lost_blocked||0)+(d.lost_starved||0)+(d.lost_manual||0)+(d.rejects||0)
+      'Total Lost':(d.lost_alarm||0)+(d.lost_blocked||0)+(d.lost_starved||0)+(d.lost_manual||0)+(d.rejects||0)+(d.overtime_lost||0)
     };
   });
   const ws=XLSX.utils.json_to_sheet(rows);
@@ -818,22 +831,25 @@ function renderOpBars(opGroups,opOrder){
   const opData=[];
   opOrder.forEach(opName=>{
     const machines=opGroups[opName];
-    let alarm=0,blocked=0,starved=0,manual=0,running=0;
+    let alarm=0,blocked=0,starved=0,manual=0,running=0,overtime=0,parts=0;
     machines.forEach(m=>{
       const d=m[lossWindow]||{};
       alarm+=d.alarm_min||0;
       blocked+=d.blocked_min||0;
       starved+=d.starved_min||0;
       manual+=d.manual_min||0;
+      running+=d.run_min||0;
+      overtime+=d.overtime_lost||0;
+      parts+=d.parts_made||0;
     });
-    // Estimate running from shift duration minus loss categories
-    const totalLoss=alarm+blocked+starved+manual;
-    // Use shift length * machine count as available time proxy
-    const shiftMin=lossWindow==='shift'?480:lossWindow==='today'?1440:10080;
-    running=Math.max(0,(shiftMin*machines.length)-totalLoss);
+    if(!running){
+      const totalLoss=alarm+blocked+starved+manual;
+      const shiftMin=lossWindow==='shift'?480:lossWindow==='today'?1440:10080;
+      running=Math.max(0,(shiftMin*machines.length)-totalLoss);
+    }
     const total=running+alarm+blocked+starved+manual;
     if(total>maxMin)maxMin=total;
-    opData.push({opName,alarm,blocked,starved,manual,running,total,count:machines.length});
+    opData.push({opName,alarm,blocked,starved,manual,running,overtime,parts,total,count:machines.length});
   });
 
   opData.forEach(op=>{
@@ -841,7 +857,7 @@ function renderOpBars(opGroups,opOrder){
     html+=`<div style="border:1px solid var(--lgray);border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07)">
       <div style="background:var(--gm-blue);color:white;padding:8px 16px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center">
         <span>${esc(op.opName)}</span>
-        <span style="font-size:11px;font-weight:600;opacity:.8">${op.count} machines · ${fmt(Math.round(op.total))} total min</span>
+        <span style="font-size:11px;font-weight:600;opacity:.8">${op.count} machines · ${fmt(op.parts)} parts · ${fmt(Math.round(op.total))} total min</span>
       </div>
       <div style="padding:12px 16px">
         <div style="display:flex;height:36px;border-radius:3px;overflow:hidden;background:var(--xlgray)">
@@ -857,6 +873,7 @@ function renderOpBars(opGroups,opOrder){
           <span style="color:#1565C0">Blocked ${op.blocked.toFixed(0)}m</span>
           <span style="color:#666">Starved ${op.starved.toFixed(0)}m</span>
           <span style="color:#F9A825">Manual ${op.manual.toFixed(0)}m</span>
+          <span style="color:#E91E90">Overtime ${fmt(op.overtime)} pts</span>
         </div>
       </div>
     </div>`;
@@ -893,9 +910,12 @@ function renderMachineBars(opGroups,opOrder){
       const blocked=d.blocked_min||0;
       const starved=d.starved_min||0;
       const manual=d.manual_min||0;
+      const overtime=d.overtime_lost||0;
+      const partsMade=d.parts_made||0;
+      const runMin=d.run_min||0;
       const totalLoss=alarm+blocked+starved+manual;
       const shiftMin=lossWindow==='shift'?480:lossWindow==='today'?1440:10080;
-      const running=Math.max(0,shiftMin-totalLoss);
+      const running=runMin||Math.max(0,shiftMin-totalLoss);
       const total=running+totalLoss;
       const pct=p=>maxMin>0?((p/maxMin)*100).toFixed(1):0;
       const lossPct=total>0?((totalLoss/total)*100).toFixed(1):0;
@@ -903,7 +923,7 @@ function renderMachineBars(opGroups,opOrder){
       html+=`<div style="margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
           <span style="font-size:12px;font-weight:800">${esc(m.machine_name)}</span>
-          <span style="font-size:11px;font-family:monospace;font-weight:700;color:${Number(lossPct)>30?'#D32F2F':Number(lossPct)>15?'#d97706':'#39B54A'}">${lossPct}% loss</span>
+          <span style="font-size:11px;font-family:monospace;font-weight:700">${fmt(partsMade)} parts · <span style="color:${Number(lossPct)>30?'#D32F2F':Number(lossPct)>15?'#d97706':'#39B54A'}">${lossPct}% loss</span></span>
         </div>
         <div style="display:flex;height:24px;border-radius:3px;overflow:hidden;background:var(--xlgray)">
           <div title="Running: ${running.toFixed(1)} min" style="width:${pct(running)}%;background:#39B54A"></div>
@@ -917,6 +937,7 @@ function renderMachineBars(opGroups,opOrder){
           <span style="color:#1565C0">${blocked.toFixed(0)}m blocked</span>
           <span style="color:#666">${starved.toFixed(0)}m starved</span>
           <span style="color:#F9A825">${manual.toFixed(0)}m manual</span>
+          <span style="color:#E91E90">${fmt(overtime)} overtime</span>
           <span style="color:#7B1FA2">${fmt(d.rejects||0)} rejects</span>
         </div>
       </div>`;

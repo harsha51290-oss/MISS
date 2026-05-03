@@ -1173,25 +1173,51 @@ async def get_losses(request: Request, shift: str = "current"):
                 return max(0, (last["bad_part_count"] or 0) - (first["bad_part_count"] or 0))
             return 0
 
+        def get_good_parts(ts_start, ts_end):
+            first = conn.execute("""
+                SELECT good_part_count FROM machine_snapshots
+                WHERE machine_id=? AND timestamp>=? AND timestamp<?
+                ORDER BY id ASC LIMIT 1
+            """, (mid, ts_start.isoformat(), ts_end.isoformat())).fetchone()
+            last = conn.execute("""
+                SELECT good_part_count FROM machine_snapshots
+                WHERE machine_id=? AND timestamp>=? AND timestamp<?
+                ORDER BY id DESC LIMIT 1
+            """, (mid, ts_start.isoformat(), ts_end.isoformat())).fetchone()
+            if first and last:
+                return max(0, (last["good_part_count"] or 0) - (first["good_part_count"] or 0))
+            return 0
+
+        def calc_overtime_lost(parts_made, run_seconds, rated_ct):
+            """Parts lost to cycle time exceeding rated CT."""
+            if rated_ct <= 0 or parts_made <= 0 or run_seconds <= 0:
+                return 0
+            ideal_parts = run_seconds / rated_ct
+            lost = ideal_parts - parts_made
+            return max(0, round(lost))
+
         # Shift data
         shift_times = get_time_by_category(s_start, s_end)
         shift_rejects = get_rejects(s_start, s_end)
+        shift_parts = get_good_parts(s_start, s_end)
 
         # Today data
         today_times = get_time_by_category(today_start, today_end)
         today_rejects = get_rejects(today_start, today_end)
+        today_parts = get_good_parts(today_start, today_end)
 
         # Custom range data
         custom_data = {}
         if custom_start and custom_end:
             cust_times = get_time_by_category(custom_start, custom_end)
             cust_rejects = get_rejects(custom_start, custom_end)
+            cust_parts = get_good_parts(custom_start, custom_end)
             if exclude_weekends:
                 cust_times = _subtract_weekends(cust_times, custom_start, custom_end, get_time_by_category)
-                # Approximate weekend rejects subtraction
                 weekends = _weekend_ranges(custom_start, custom_end)
                 for ws, we in weekends:
                     cust_rejects = max(0, cust_rejects - get_rejects(ws, we))
+                    cust_parts = max(0, cust_parts - get_good_parts(ws, we))
             custom_data = {
                 "alarm_min": round(cust_times["alarm"] / 60, 1),
                 "blocked_min": round(cust_times["blocked"] / 60, 1),
@@ -1202,6 +1228,9 @@ async def get_losses(request: Request, shift: str = "current"):
                 "lost_starved": calc_lost(cust_times["starved"], rated_ct),
                 "lost_manual": calc_lost(cust_times["manual"], rated_ct),
                 "rejects": cust_rejects,
+                "parts_made": cust_parts,
+                "run_min": round(cust_times["running"] / 60, 1),
+                "overtime_lost": calc_overtime_lost(cust_parts, cust_times["running"], rated_ct),
             }
 
         entry = {
@@ -1220,6 +1249,9 @@ async def get_losses(request: Request, shift: str = "current"):
                 "lost_starved": calc_lost(shift_times["starved"], rated_ct),
                 "lost_manual": calc_lost(shift_times["manual"], rated_ct),
                 "rejects": shift_rejects,
+                "parts_made": shift_parts,
+                "run_min": round(shift_times["running"] / 60, 1),
+                "overtime_lost": calc_overtime_lost(shift_parts, shift_times["running"], rated_ct),
             },
             "today": {
                 "alarm_min": round(today_times["alarm"] / 60, 1),
@@ -1231,6 +1263,9 @@ async def get_losses(request: Request, shift: str = "current"):
                 "lost_starved": calc_lost(today_times["starved"], rated_ct),
                 "lost_manual": calc_lost(today_times["manual"], rated_ct),
                 "rejects": today_rejects,
+                "parts_made": today_parts,
+                "run_min": round(today_times["running"] / 60, 1),
+                "overtime_lost": calc_overtime_lost(today_parts, today_times["running"], rated_ct),
             },
         }
         if custom_data:
