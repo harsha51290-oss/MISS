@@ -377,7 +377,9 @@ function switchTab(tab){
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
     document.getElementById('view-'+t).style.display=t===tab?'':'none';
   });
-  document.getElementById('ctrlBar').style.display=(tab==='tools'||tab==='flow')?'none':'flex';
+  const hideBar=tab==='tools'||tab==='flow'||tab==='losses';
+  document.getElementById('ctrlBar').style.display=hideBar?'none':'flex';
+  document.querySelector('.ptpmc-legend').style.display=(tab==='losses')?'none':'flex';
   if(tab==='flow')loadProcessFlow();
   if(tab==='losses')loadLosses();
   if(tab==='tools')loadTools();
@@ -689,10 +691,19 @@ function buildLossCard(m,window){
 
 let lossesData=[];
 let lossWindow='shift';
+let lossView='cards';
+let lossExcludeWeekends=false;
+let lossCustomFrom='';
+let lossCustomTo='';
 
 async function loadLosses(){
   try{
-    const r=await fetch(API+'/api/losses?shift='+currentShift);
+    let url=API+'/api/losses?shift='+currentShift;
+    if(lossWindow==='custom'&&lossCustomFrom&&lossCustomTo){
+      url=API+'/api/losses?from='+lossCustomFrom+'&to='+lossCustomTo;
+      if(lossExcludeWeekends)url+='&exclude_weekends=1';
+    }
+    const r=await fetch(url);
     lossesData=await r.json();
     renderLosses();
   }catch(e){
@@ -700,38 +711,219 @@ async function loadLosses(){
   }
 }
 
+function lossBtn(label,val,field){
+  const active=field==='view'?(lossView===val):(lossWindow===val);
+  return `<button onclick="setLoss('${field}','${val}')" style="padding:5px 14px;font-size:12px;font-weight:800;border-radius:2px;cursor:pointer;border:1.5px solid var(--gm-blue);background:${active?'var(--gm-blue)':'white'};color:${active?'white':'var(--gm-blue)'}">${label}</button>`;
+}
+
 function renderLosses(){
-  if(!lossesData.length){document.getElementById('losses-content').innerHTML='<div style="padding:40px;text-align:center;color:var(--dgray)">No losses data</div>';return;}
+  if(!lossesData.length&&lossWindow!=='custom'){document.getElementById('losses-content').innerHTML='<div style="padding:40px;text-align:center;color:var(--dgray)">No losses data</div>';return;}
   const opGroups={};const opOrder=[];
   lossesData.forEach(m=>{
     const k=m.op_name||m.op;
     if(!opGroups[k]){opGroups[k]=[];opOrder.push(k);}
     opGroups[k].push(m);
   });
-  let html='';
-  // Window selector
-  html+=`<div style="padding:12px 0 8px;display:flex;gap:8px;align-items:center">
-    <span style="font-size:12px;font-weight:800;color:var(--dgray);text-transform:uppercase;letter-spacing:.05em">Showing:</span>
-    <button onclick="setLossWindow('shift',this)" style="padding:5px 14px;font-size:12px;font-weight:800;border-radius:2px;cursor:pointer;border:1.5px solid var(--gm-blue);background:${lossWindow==='shift'?'var(--gm-blue)':'white'};color:${lossWindow==='shift'?'white':'var(--gm-blue)'}">This Shift</button>
-    <button onclick="setLossWindow('today',this)" style="padding:5px 14px;font-size:12px;font-weight:800;border-radius:2px;cursor:pointer;border:1.5px solid var(--gm-blue);background:${lossWindow==='today'?'var(--gm-blue)':'white'};color:${lossWindow==='today'?'white':'var(--gm-blue)'}">Today</button>
-    <button onclick="setLossWindow('week',this)" style="padding:5px 14px;font-size:12px;font-weight:800;border-radius:2px;cursor:pointer;border:1.5px solid var(--gm-blue);background:${lossWindow==='week'?'var(--gm-blue)':'white'};color:${lossWindow==='week'?'white':'var(--gm-blue)'}">This Week</button>
-  </div>`;
-  opOrder.forEach(opName=>{
-    const opKey=opName.replace(/[^a-zA-Z0-9]/g,'_');
-    html+=`<div class="op-section"><div class="op-hdr" onclick="toggleOp('${opKey}')">
-      <span class="op-name">${opName}</span>
-      <span class="toggle-icon" id="op-icon-${opKey}">&#9660;</span>
-    </div><div class="op-body" id="op-body-${opKey}">
-    <div class="machine-grid" style="padding:12px">`;
-    opGroups[opName].forEach(m=>{html+=buildLossCard(m,lossWindow);});
-    html+=`</div></div></div>`;
-  });
+
+  const today=new Date().toISOString().slice(0,10);
+  let html='<div style="padding:12px 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
+  html+='<span style="font-size:12px;font-weight:800;color:var(--dgray);text-transform:uppercase;letter-spacing:.05em">Period:</span>';
+  html+=lossBtn('This Shift','shift','window')+lossBtn('Today','today','window')+lossBtn('Custom Range','custom','window');
+  if(lossWindow==='custom'){
+    html+='<span style="width:1px;height:24px;background:var(--lgray);margin:0 2px"></span>';
+    html+=`<input type="date" value="${lossCustomFrom||today}" onchange="lossCustomFrom=this.value" style="padding:4px 8px;font-size:12px;font-weight:600;border:1.5px solid var(--lgray);border-radius:2px">`;
+    html+=`<span style="font-size:12px;font-weight:700;color:var(--dgray)">to</span>`;
+    html+=`<input type="date" value="${lossCustomTo||today}" onchange="lossCustomTo=this.value" style="padding:4px 8px;font-size:12px;font-weight:600;border:1.5px solid var(--lgray);border-radius:2px">`;
+    html+=`<button onclick="loadLosses()" style="padding:5px 14px;font-size:12px;font-weight:800;border-radius:2px;cursor:pointer;border:1.5px solid var(--green);background:var(--green);color:white">Go</button>`;
+    html+=`<label style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--dgray);cursor:pointer">
+      <input type="checkbox" ${lossExcludeWeekends?'checked':''} onchange="lossExcludeWeekends=this.checked"> Exclude Weekends</label>`;
+  }
+  html+='<span style="width:1px;height:24px;background:var(--lgray);margin:0 6px"></span>';
+  html+='<span style="font-size:12px;font-weight:800;color:var(--dgray);text-transform:uppercase;letter-spacing:.05em">View:</span>';
+  html+=lossBtn('Cards','cards','view')+lossBtn('By Operation','op_bars','view')+lossBtn('By Machine','machine_bars','view');
+  html+='<span style="width:1px;height:24px;background:var(--lgray);margin:0 6px"></span>';
+  html+=`<button onclick="downloadLosses()" style="padding:5px 14px;font-size:12px;font-weight:800;border-radius:2px;cursor:pointer;border:1.5px solid var(--green);background:var(--green);color:white">&#8595; Download Excel</button>`;
+  html+='</div>';
+
+  // Legend
+  html+='<div style="display:flex;gap:14px;padding:4px 0 12px;font-size:11px;font-weight:700;flex-wrap:wrap">';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#39B54A"></span>Running</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#D32F2F"></span>Alarm/Down</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#1565C0"></span>Blocked</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#9E9E9E"></span>Starved</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#F9A825"></span>Manual</span>';
+  html+='</div>';
+
+  if(lossView==='cards'){
+    opOrder.forEach(opName=>{
+      const opKey=opName.replace(/[^a-zA-Z0-9]/g,'_');
+      html+=`<div class="op-section"><div class="op-hdr" onclick="toggleOp('${opKey}')">
+        <span class="op-name">${opName}</span>
+        <span class="toggle-icon" id="op-icon-${opKey}">&#9660;</span>
+      </div><div class="op-body" id="op-body-${opKey}">
+      <div class="machine-grid" style="padding:12px">`;
+      opGroups[opName].forEach(m=>{html+=buildLossCard(m,lossWindow);});
+      html+=`</div></div></div>`;
+    });
+  } else if(lossView==='op_bars'){
+    html+=renderOpBars(opGroups,opOrder);
+  } else if(lossView==='machine_bars'){
+    html+=renderMachineBars(opGroups,opOrder);
+  }
+
   document.getElementById('losses-content').innerHTML=html;
 }
 
-function setLossWindow(w){
-  lossWindow=w;
-  renderLosses();
+function setLoss(field,val){
+  if(field==='view'){lossView=val;renderLosses();}
+  else{
+    lossWindow=val;
+    if(val==='custom'){
+      if(!lossCustomFrom)lossCustomFrom=new Date().toISOString().slice(0,10);
+      if(!lossCustomTo)lossCustomTo=new Date().toISOString().slice(0,10);
+      renderLosses();
+    } else {
+      loadLosses();
+    }
+  }
+}
+
+function downloadLosses(){
+  if(!lossesData.length){alert('No data to download');return;}
+  const w=lossWindow==='custom'?'custom':lossWindow;
+  const rows=lossesData.map(m=>{
+    const d=m[w]||m.shift||{};
+    return{
+      'Machine ID':m.machine_id,'Machine':m.machine_name,'Operation':m.op_name||m.op,
+      'Alarm/Down (min)':d.alarm_min||0,'Alarm Lost (pts)':d.lost_alarm||0,
+      'Blocked (min)':d.blocked_min||0,'Blocked Lost (pts)':d.lost_blocked||0,
+      'Starved (min)':d.starved_min||0,'Starved Lost (pts)':d.lost_starved||0,
+      'Manual (min)':d.manual_min||0,'Manual Lost (pts)':d.lost_manual||0,
+      'Rejects':d.rejects||0,
+      'Total Lost':(d.lost_alarm||0)+(d.lost_blocked||0)+(d.lost_starved||0)+(d.lost_manual||0)+(d.rejects||0)
+    };
+  });
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Losses');
+  const period=w==='custom'?(lossCustomFrom+'_to_'+lossCustomTo):w;
+  const area=(CONFIG_CACHE||{}).area?.name||'Area';
+  XLSX.writeFile(wb,area.replace(/[^a-zA-Z0-9]/g,'_')+'_Losses_'+period+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function renderOpBars(opGroups,opOrder){
+  let html='<div style="display:flex;flex-direction:column;gap:12px">';
+  // Find max total minutes across ops for scaling
+  let maxMin=0;
+  const opData=[];
+  opOrder.forEach(opName=>{
+    const machines=opGroups[opName];
+    let alarm=0,blocked=0,starved=0,manual=0,running=0;
+    machines.forEach(m=>{
+      const d=m[lossWindow]||{};
+      alarm+=d.alarm_min||0;
+      blocked+=d.blocked_min||0;
+      starved+=d.starved_min||0;
+      manual+=d.manual_min||0;
+    });
+    // Estimate running from shift duration minus loss categories
+    const totalLoss=alarm+blocked+starved+manual;
+    // Use shift length * machine count as available time proxy
+    const shiftMin=lossWindow==='shift'?480:lossWindow==='today'?1440:10080;
+    running=Math.max(0,(shiftMin*machines.length)-totalLoss);
+    const total=running+alarm+blocked+starved+manual;
+    if(total>maxMin)maxMin=total;
+    opData.push({opName,alarm,blocked,starved,manual,running,total,count:machines.length});
+  });
+
+  opData.forEach(op=>{
+    const pct=p=>maxMin>0?((p/maxMin)*100).toFixed(1):0;
+    html+=`<div style="border:1px solid var(--lgray);border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+      <div style="background:var(--gm-blue);color:white;padding:8px 16px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center">
+        <span>${esc(op.opName)}</span>
+        <span style="font-size:11px;font-weight:600;opacity:.8">${op.count} machines · ${fmt(Math.round(op.total))} total min</span>
+      </div>
+      <div style="padding:12px 16px">
+        <div style="display:flex;height:36px;border-radius:3px;overflow:hidden;background:var(--xlgray)">
+          <div title="Running: ${op.running.toFixed(1)} min" style="width:${pct(op.running)}%;background:#39B54A;transition:width .3s"></div>
+          <div title="Alarm/Down: ${op.alarm.toFixed(1)} min" style="width:${pct(op.alarm)}%;background:#D32F2F;transition:width .3s"></div>
+          <div title="Blocked: ${op.blocked.toFixed(1)} min" style="width:${pct(op.blocked)}%;background:#1565C0;transition:width .3s"></div>
+          <div title="Starved: ${op.starved.toFixed(1)} min" style="width:${pct(op.starved)}%;background:#9E9E9E;transition:width .3s"></div>
+          <div title="Manual: ${op.manual.toFixed(1)} min" style="width:${pct(op.manual)}%;background:#F9A825;transition:width .3s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;font-weight:700;font-family:monospace;flex-wrap:wrap;gap:4px">
+          <span style="color:#39B54A">Running ${op.running.toFixed(0)}m</span>
+          <span style="color:#D32F2F">Alarm ${op.alarm.toFixed(0)}m</span>
+          <span style="color:#1565C0">Blocked ${op.blocked.toFixed(0)}m</span>
+          <span style="color:#666">Starved ${op.starved.toFixed(0)}m</span>
+          <span style="color:#F9A825">Manual ${op.manual.toFixed(0)}m</span>
+        </div>
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  return html;
+}
+
+function renderMachineBars(opGroups,opOrder){
+  let html='';
+  // Find global max for consistent scaling
+  let maxMin=0;
+  lossesData.forEach(m=>{
+    const d=m[lossWindow]||{};
+    const shiftMin=lossWindow==='shift'?480:lossWindow==='today'?1440:10080;
+    const loss=(d.alarm_min||0)+(d.blocked_min||0)+(d.starved_min||0)+(d.manual_min||0);
+    const total=Math.max(shiftMin,loss);
+    if(total>maxMin)maxMin=total;
+  });
+
+  opOrder.forEach(opName=>{
+    const machines=opGroups[opName];
+    const opKey=opName.replace(/[^a-zA-Z0-9]/g,'_');
+    html+=`<div style="border:1px solid var(--lgray);border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:12px">
+      <div style="background:var(--gm-blue);color:white;padding:8px 16px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;cursor:pointer" onclick="toggleOp('mb_${opKey}')">
+        <span>${esc(opName)}</span>
+        <span style="font-size:13px;margin-left:8px" id="op-icon-mb_${opKey}">&#9660;</span>
+      </div>
+      <div class="op-body" id="op-body-mb_${opKey}" style="padding:12px 16px">`;
+
+    machines.forEach(m=>{
+      const d=m[lossWindow]||{};
+      const alarm=d.alarm_min||0;
+      const blocked=d.blocked_min||0;
+      const starved=d.starved_min||0;
+      const manual=d.manual_min||0;
+      const totalLoss=alarm+blocked+starved+manual;
+      const shiftMin=lossWindow==='shift'?480:lossWindow==='today'?1440:10080;
+      const running=Math.max(0,shiftMin-totalLoss);
+      const total=running+totalLoss;
+      const pct=p=>maxMin>0?((p/maxMin)*100).toFixed(1):0;
+      const lossPct=total>0?((totalLoss/total)*100).toFixed(1):0;
+
+      html+=`<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:12px;font-weight:800">${esc(m.machine_name)}</span>
+          <span style="font-size:11px;font-family:monospace;font-weight:700;color:${Number(lossPct)>30?'#D32F2F':Number(lossPct)>15?'#d97706':'#39B54A'}">${lossPct}% loss</span>
+        </div>
+        <div style="display:flex;height:24px;border-radius:3px;overflow:hidden;background:var(--xlgray)">
+          <div title="Running: ${running.toFixed(1)} min" style="width:${pct(running)}%;background:#39B54A"></div>
+          <div title="Alarm/Down: ${alarm.toFixed(1)} min" style="width:${pct(alarm)}%;background:#D32F2F"></div>
+          <div title="Blocked: ${blocked.toFixed(1)} min" style="width:${pct(blocked)}%;background:#1565C0"></div>
+          <div title="Starved: ${starved.toFixed(1)} min" style="width:${pct(starved)}%;background:#9E9E9E"></div>
+          <div title="Manual: ${manual.toFixed(1)} min" style="width:${pct(manual)}%;background:#F9A825"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:3px;font-size:10px;font-family:monospace;font-weight:600;color:var(--dgray)">
+          <span style="color:#D32F2F">${alarm.toFixed(0)}m alarm</span>
+          <span style="color:#1565C0">${blocked.toFixed(0)}m blocked</span>
+          <span style="color:#666">${starved.toFixed(0)}m starved</span>
+          <span style="color:#F9A825">${manual.toFixed(0)}m manual</span>
+          <span style="color:#7B1FA2">${fmt(d.rejects||0)} rejects</span>
+        </div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+  return html;
 }
 
 // Tool Management Tab
@@ -1052,7 +1244,6 @@ async function loadAll(){
     updateBanner(machines);
 
     // Refresh active tab data too
-    if(currentTab==='losses')loadLosses();
     if(currentTab==='tools')loadTools();
     if(currentTab==='trades')loadTradesHistory();
     // Always refresh flow strip on production tab

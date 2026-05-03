@@ -1053,22 +1053,33 @@ async def serve_flow_editor():
     return HTMLResponse("<h1>flow_editor.html not found</h1>", status_code=404)
 
 
-if __name__ == "__main__":
-    cfg = load_config()
-    port = cfg["area"]["api_port"]
-    print(f"MIS API starting - Area {cfg['area']['code']} on port {port}")
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
-
-
 # -- Losses --
+def _weekend_ranges(start_dt, end_dt):
+    """Return list of (start, end) datetime tuples for weekend periods within a range.
+    Weekend = Friday 22:00 to Sunday 22:00."""
+    ranges = []
+    d = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    while d <= end_dt + timedelta(days=2):
+        if d.weekday() == 4:  # Friday
+            ws = d.replace(hour=22)
+            we = (d + timedelta(days=2)).replace(hour=22)
+            if ws < end_dt and we > start_dt:
+                ranges.append((max(ws, start_dt), min(we, end_dt)))
+        d += timedelta(days=1)
+    return ranges
+
+def _subtract_weekends(times_dict, start_dt, end_dt, get_time_fn):
+    """Subtract weekend time from each category by computing weekend-only times."""
+    weekends = _weekend_ranges(start_dt, end_dt)
+    for ws, we in weekends:
+        wk_times = get_time_fn(ws, we)
+        for cat in times_dict:
+            times_dict[cat] = max(0, times_dict[cat] - wk_times.get(cat, 0))
+    return times_dict
+
 @app.get("/api/losses")
-async def get_losses(shift: str = "current"):
-    """
-    Returns parts lost per machine broken down by PT-PM&C category.
-    For each machine: down_min, blocked_min, starved_min, manual_min,
-    lost_down, lost_blocked, lost_starved, lost_manual, rejects.
-    Time windows: shift, today, week.
-    """
+async def get_losses(request: Request, shift: str = "current"):
+
     cfg = load_config()
     shift_letter, day_id, shift_start, shift_end = resolve_shift(cfg, shift)
     s_start, s_end = shift_time_range(cfg, shift_letter, day_id)
@@ -1078,12 +1089,23 @@ async def get_losses(shift: str = "current"):
     conn = get_db()
     now = datetime.now()
 
+    # Custom range params
+    q = request.query_params
+    custom_from = q.get("from")
+    custom_to = q.get("to")
+    exclude_weekends = q.get("exclude_weekends") == "1"
+    custom_start = None
+    custom_end = None
+    if custom_from and custom_to:
+        try:
+            custom_start = datetime.strptime(custom_from, "%Y-%m-%d").replace(hour=6)
+            custom_end = datetime.strptime(custom_to, "%Y-%m-%d").replace(hour=22)
+        except ValueError:
+            pass
+
     # Today = all shifts in current day_id
     today_start = datetime.strptime(day_id, "%Y-%m-%d").replace(hour=6, minute=0, second=0)
     today_end = today_start + timedelta(hours=24)
-
-    # Week = last 7 days
-    week_start = now - timedelta(days=7)
 
     result = []
     for m in cfg["machines"]:
@@ -1159,11 +1181,30 @@ async def get_losses(shift: str = "current"):
         today_times = get_time_by_category(today_start, today_end)
         today_rejects = get_rejects(today_start, today_end)
 
-        # Week data
-        week_times = get_time_by_category(week_start, now)
-        week_rejects = get_rejects(week_start, now)
+        # Custom range data
+        custom_data = {}
+        if custom_start and custom_end:
+            cust_times = get_time_by_category(custom_start, custom_end)
+            cust_rejects = get_rejects(custom_start, custom_end)
+            if exclude_weekends:
+                cust_times = _subtract_weekends(cust_times, custom_start, custom_end, get_time_by_category)
+                # Approximate weekend rejects subtraction
+                weekends = _weekend_ranges(custom_start, custom_end)
+                for ws, we in weekends:
+                    cust_rejects = max(0, cust_rejects - get_rejects(ws, we))
+            custom_data = {
+                "alarm_min": round(cust_times["alarm"] / 60, 1),
+                "blocked_min": round(cust_times["blocked"] / 60, 1),
+                "starved_min": round(cust_times["starved"] / 60, 1),
+                "manual_min": round(cust_times["manual"] / 60, 1),
+                "lost_alarm": calc_lost(cust_times["alarm"], rated_ct),
+                "lost_blocked": calc_lost(cust_times["blocked"], rated_ct),
+                "lost_starved": calc_lost(cust_times["starved"], rated_ct),
+                "lost_manual": calc_lost(cust_times["manual"], rated_ct),
+                "rejects": cust_rejects,
+            }
 
-        result.append({
+        entry = {
             "machine_id": mid,
             "machine_name": m["name"],
             "op": m["op"],
@@ -1191,18 +1232,10 @@ async def get_losses(shift: str = "current"):
                 "lost_manual": calc_lost(today_times["manual"], rated_ct),
                 "rejects": today_rejects,
             },
-            "week": {
-                "alarm_min": round(week_times["alarm"] / 60, 1),
-                "blocked_min": round(week_times["blocked"] / 60, 1),
-                "starved_min": round(week_times["starved"] / 60, 1),
-                "manual_min": round(week_times["manual"] / 60, 1),
-                "lost_alarm": calc_lost(week_times["alarm"], rated_ct),
-                "lost_blocked": calc_lost(week_times["blocked"], rated_ct),
-                "lost_starved": calc_lost(week_times["starved"], rated_ct),
-                "lost_manual": calc_lost(week_times["manual"], rated_ct),
-                "rejects": week_rejects,
-            },
-        })
+        }
+        if custom_data:
+            entry["custom"] = custom_data
+        result.append(entry)
 
     conn.close()
     return JSONResponse(result)
@@ -1264,3 +1297,10 @@ async def update_tool_change_reason(request: Request):
     conn.commit()
     conn.close()
     return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    cfg = load_config()
+    port = cfg["area"]["api_port"]
+    print(f"MIS API starting - Area {cfg['area']['code']} on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
