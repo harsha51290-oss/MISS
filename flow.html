@@ -56,7 +56,7 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);
 
 /* Tab contents */
 .tab-content{display:none;overflow:hidden;flex-direction:column}
-.tab-content.active{display:flex;flex:1;height:calc(100vh - 52px - 46px)}
+.tab-content.active{display:flex;flex:1;height:calc(100vh - 52px - 44px)}
 
 /* Flow editor */
 .flow-wrap{display:flex;flex:1;overflow:hidden}
@@ -202,19 +202,6 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);
 
   <!-- Tab 1: Process Flow Editor -->
   <div class="tab-content active" id="tab-flow">
-    <div class="toolbar" style="flex-shrink:0">
-      <span class="toolbar-label">Add:</span>
-      <div class="fp-node fp-op" draggable="true" ondragstart="fpDragStart(event,'operation')">⚙ Operation</div>
-      <div class="fp-node fp-buf" draggable="true" ondragstart="fpDragStart(event,'buffer')">▣ Buffer</div>
-      <div class="fp-node fp-out" draggable="true" ondragstart="fpDragStart(event,'output')">✓ Output</div>
-      <div class="sep"></div>
-      <button class="btn btn-outline" onclick="fpZoomFit()">Fit View</button>
-      <button class="btn btn-danger-sm" id="fpDeleteBtn" style="display:none" onclick="fpDeleteSelected()">Delete Node</button>
-      <span class="dirty-msg" id="fpDirtyMsg" style="display:none">● Unsaved changes</span>
-      <span class="hint">Drag nodes · Drag right port edge → connect · Click connection to delete · Scroll=zoom · Drag=pan</span>
-      <div class="sep"></div>
-      <button class="btn btn-save" onclick="promptSave()">Save Flow</button>
-    </div>
     <div class="flow-wrap" style="flex:1;min-height:0">
       <div class="canvas-wrap" id="fpCanvasWrap" style="min-height:0"
         ondragover="event.preventDefault()"
@@ -226,12 +213,26 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);
         <canvas id="fpCanvas"></canvas>
       </div>
       <div class="panel">
+        <!-- Toolbox section -->
+        <div class="panel-hdr">Toolbox</div>
+        <div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px;border-bottom:2px solid var(--lgray)">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <div class="fp-node fp-op" draggable="true" ondragstart="fpDragStart(event,'operation')" style="font-size:11px;padding:5px 10px">⚙ Operation</div>
+            <div class="fp-node fp-buf" draggable="true" ondragstart="fpDragStart(event,'buffer')" style="font-size:11px;padding:5px 10px">▣ Buffer</div>
+            <div class="fp-node fp-out" draggable="true" ondragstart="fpDragStart(event,'output')" style="font-size:11px;padding:5px 10px">✓ Output</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-outline" onclick="fpZoomFit()" style="font-size:11px;padding:4px 10px;flex:1">Fit View</button>
+            <button class="btn btn-save" onclick="promptSave()" style="font-size:11px;padding:4px 10px;flex:1">Save Flow</button>
+          </div>
+          <span class="dirty-msg" id="fpDirtyMsg" style="display:none;font-size:10px">● Unsaved changes</span>
+          <div style="font-size:9px;color:var(--gray);line-height:1.5">Drag nodes onto canvas · Drag right port → connect · Click connection to delete · Scroll=zoom</div>
+        </div>
+        <!-- Node properties section -->
         <div class="panel-hdr">Node Properties</div>
         <div class="panel-body">
           <div class="panel-empty" id="fpPanelEmpty">
-            Click a node to edit its properties.<br><br>
-            Drag nodes from toolbar onto canvas.<br>
-            Connect by dragging the right port edge.
+            Click a node to edit its properties.
           </div>
           <div id="fpPanelForm" style="display:none;flex-direction:column;gap:8px">
             <div class="field">
@@ -576,7 +577,6 @@ function fpSelectNode(id){
   if(!node)return;
   document.getElementById('fpPanelEmpty').style.display='none';
   document.getElementById('fpPanelForm').style.display='flex';
-  document.getElementById('fpDeleteBtn').style.display='';
   document.getElementById('fpId').value=node.id;
   document.getElementById('fpLabel').value=node.label||'';
   document.getElementById('fpNote').value=node.note||'';
@@ -596,7 +596,6 @@ function fpClearSelect(){
   fpSelected=null;
   document.getElementById('fpPanelEmpty').style.display='';
   document.getElementById('fpPanelForm').style.display='none';
-  document.getElementById('fpDeleteBtn').style.display='none';
   fpDraw();
 }
 function fpUpdateNode(key,val){const n=fp.nodes.find(n=>n.id===fpSelected);if(n){n[key]=val;fpDirty=true;fpShowDirty();fpDraw()}}

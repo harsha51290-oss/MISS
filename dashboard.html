@@ -854,6 +854,7 @@ function renderOpBars(opGroups,opOrder){
 
   opData.forEach(op=>{
     const pct=p=>maxMin>0?((p/maxMin)*100).toFixed(1):0;
+    const tp=v=>op.total>0?((v/op.total)*100).toFixed(1):'0.0';
     html+=`<div style="border:1px solid var(--lgray);border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07)">
       <div style="background:var(--gm-blue);color:white;padding:8px 16px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center">
         <span>${esc(op.opName)}</span>
@@ -861,18 +862,18 @@ function renderOpBars(opGroups,opOrder){
       </div>
       <div style="padding:12px 16px">
         <div style="display:flex;height:36px;border-radius:3px;overflow:hidden;background:var(--xlgray)">
-          <div title="Running: ${op.running.toFixed(1)} min" style="width:${pct(op.running)}%;background:#39B54A;transition:width .3s"></div>
-          <div title="Alarm/Down: ${op.alarm.toFixed(1)} min" style="width:${pct(op.alarm)}%;background:#D32F2F;transition:width .3s"></div>
-          <div title="Blocked: ${op.blocked.toFixed(1)} min" style="width:${pct(op.blocked)}%;background:#1565C0;transition:width .3s"></div>
-          <div title="Starved: ${op.starved.toFixed(1)} min" style="width:${pct(op.starved)}%;background:#9E9E9E;transition:width .3s"></div>
-          <div title="Manual: ${op.manual.toFixed(1)} min" style="width:${pct(op.manual)}%;background:#F9A825;transition:width .3s"></div>
+          <div title="Running: ${op.running.toFixed(1)} min (${tp(op.running)}%)" style="width:${pct(op.running)}%;background:#39B54A;transition:width .3s"></div>
+          <div title="Alarm/Down: ${op.alarm.toFixed(1)} min (${tp(op.alarm)}%)" style="width:${pct(op.alarm)}%;background:#D32F2F;transition:width .3s"></div>
+          <div title="Blocked: ${op.blocked.toFixed(1)} min (${tp(op.blocked)}%)" style="width:${pct(op.blocked)}%;background:#1565C0;transition:width .3s"></div>
+          <div title="Starved: ${op.starved.toFixed(1)} min (${tp(op.starved)}%)" style="width:${pct(op.starved)}%;background:#9E9E9E;transition:width .3s"></div>
+          <div title="Manual: ${op.manual.toFixed(1)} min (${tp(op.manual)}%)" style="width:${pct(op.manual)}%;background:#F9A825;transition:width .3s"></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;font-weight:700;font-family:monospace;flex-wrap:wrap;gap:4px">
-          <span style="color:#39B54A">Running ${op.running.toFixed(0)}m</span>
-          <span style="color:#D32F2F">Alarm ${op.alarm.toFixed(0)}m</span>
-          <span style="color:#1565C0">Blocked ${op.blocked.toFixed(0)}m</span>
-          <span style="color:#666">Starved ${op.starved.toFixed(0)}m</span>
-          <span style="color:#F9A825">Manual ${op.manual.toFixed(0)}m</span>
+          <span style="color:#39B54A">Running ${op.running.toFixed(0)}m (${tp(op.running)}%)</span>
+          <span style="color:#D32F2F">Alarm ${op.alarm.toFixed(0)}m (${tp(op.alarm)}%)</span>
+          <span style="color:#1565C0">Blocked ${op.blocked.toFixed(0)}m (${tp(op.blocked)}%)</span>
+          <span style="color:#666">Starved ${op.starved.toFixed(0)}m (${tp(op.starved)}%)</span>
+          <span style="color:#F9A825">Manual ${op.manual.toFixed(0)}m (${tp(op.manual)}%)</span>
           <span style="color:#E91E90">Overtime ${fmt(op.overtime)} pts</span>
         </div>
       </div>
@@ -918,6 +919,7 @@ function renderMachineBars(opGroups,opOrder){
       const running=runMin||Math.max(0,shiftMin-totalLoss);
       const total=running+totalLoss;
       const pct=p=>maxMin>0?((p/maxMin)*100).toFixed(1):0;
+      const tp=v=>total>0?((v/total)*100).toFixed(1):'0.0';
       const lossPct=total>0?((totalLoss/total)*100).toFixed(1):0;
 
       html+=`<div style="margin-bottom:10px">
@@ -926,17 +928,17 @@ function renderMachineBars(opGroups,opOrder){
           <span style="font-size:11px;font-family:monospace;font-weight:700">${fmt(partsMade)} parts · <span style="color:${Number(lossPct)>30?'#D32F2F':Number(lossPct)>15?'#d97706':'#39B54A'}">${lossPct}% loss</span></span>
         </div>
         <div style="display:flex;height:24px;border-radius:3px;overflow:hidden;background:var(--xlgray)">
-          <div title="Running: ${running.toFixed(1)} min" style="width:${pct(running)}%;background:#39B54A"></div>
-          <div title="Alarm/Down: ${alarm.toFixed(1)} min" style="width:${pct(alarm)}%;background:#D32F2F"></div>
-          <div title="Blocked: ${blocked.toFixed(1)} min" style="width:${pct(blocked)}%;background:#1565C0"></div>
-          <div title="Starved: ${starved.toFixed(1)} min" style="width:${pct(starved)}%;background:#9E9E9E"></div>
-          <div title="Manual: ${manual.toFixed(1)} min" style="width:${pct(manual)}%;background:#F9A825"></div>
+          <div title="Running: ${running.toFixed(1)} min (${tp(running)}%)" style="width:${pct(running)}%;background:#39B54A"></div>
+          <div title="Alarm/Down: ${alarm.toFixed(1)} min (${tp(alarm)}%)" style="width:${pct(alarm)}%;background:#D32F2F"></div>
+          <div title="Blocked: ${blocked.toFixed(1)} min (${tp(blocked)}%)" style="width:${pct(blocked)}%;background:#1565C0"></div>
+          <div title="Starved: ${starved.toFixed(1)} min (${tp(starved)}%)" style="width:${pct(starved)}%;background:#9E9E9E"></div>
+          <div title="Manual: ${manual.toFixed(1)} min (${tp(manual)}%)" style="width:${pct(manual)}%;background:#F9A825"></div>
         </div>
         <div style="display:flex;gap:10px;margin-top:3px;font-size:10px;font-family:monospace;font-weight:600;color:var(--dgray)">
-          <span style="color:#D32F2F">${alarm.toFixed(0)}m alarm</span>
-          <span style="color:#1565C0">${blocked.toFixed(0)}m blocked</span>
-          <span style="color:#666">${starved.toFixed(0)}m starved</span>
-          <span style="color:#F9A825">${manual.toFixed(0)}m manual</span>
+          <span style="color:#D32F2F">${alarm.toFixed(0)}m alarm (${tp(alarm)}%)</span>
+          <span style="color:#1565C0">${blocked.toFixed(0)}m blocked (${tp(blocked)}%)</span>
+          <span style="color:#666">${starved.toFixed(0)}m starved (${tp(starved)}%)</span>
+          <span style="color:#F9A825">${manual.toFixed(0)}m manual (${tp(manual)}%)</span>
           <span style="color:#E91E90">${fmt(overtime)} overtime</span>
           <span style="color:#7B1FA2">${fmt(d.rejects||0)} rejects</span>
         </div>

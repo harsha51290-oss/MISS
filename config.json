@@ -1058,12 +1058,12 @@
         "label": "OP 190\nUVA + BAH4",
         "note": "UVA 1A/1B/2A/2B/3A/3B + Bahmueller 4",
         "machines": [
-          "BH_UVA1A",
           "BH_UVA1B",
           "BH_UVA2A",
           "BH_UVA2B",
           "BH_UVA3A",
           "BH_UVA3B",
+          "BH_UVA1A",
           "BH_BAH4"
         ],
         "x": 1080,
