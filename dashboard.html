@@ -12,6 +12,16 @@
   --gm-light:#D6E5FB;--gm-lightest:#F0F5FF;
   --black:#222;--dgray:#555;--gray:#999;
   --lgray:#DDD;--xlgray:#F5F5F5;--white:#fff;
+  /* PT-PM&C GM Standard Colors */
+  --ptpmc-running:#39B54A;
+  --ptpmc-dressing:#2d8a3e;
+  --ptpmc-blocked:#1565C0;
+  --ptpmc-starved:#E0E0E0;
+  --ptpmc-manual:#F9A825;
+  --ptpmc-alarm:#D32F2F;
+  --ptpmc-other:#795548;
+  --ptpmc-no-comm:#212121;
+  /* Legacy UI colors */
   --green:#4E802D;--mgreen:#39B54A;--lgreen:#DDE7D5;
   --red:#D2232B;--dred:#971318;--lred:#F5D6D6;--ered:#EC9B9D;
   --yellow:#FEC710;--lyellow:#FCF1D2;--orange:#F57F20;
@@ -31,7 +41,12 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);background:v
 .msg-banner.break{background:#fff3e0;color:#7a3c00;border-bottom:2px solid var(--orange)}
 .plc-banner{padding:8px 20px;font-size:13px;font-weight:800;display:none;align-items:center;justify-content:center;gap:8px;background:var(--lred);color:var(--dred);border-bottom:2px solid var(--red)}
 .plc-banner.show{display:flex}
-.ctrl-bar{background:white;border-bottom:2px solid var(--lgray);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;position:sticky;top:64px;z-index:198}
+/* Tab bar */
+.tab-bar{background:white;border-bottom:2px solid var(--lgray);display:flex;align-items:stretch;flex-shrink:0;position:sticky;top:64px;z-index:199}
+.tab-btn{padding:12px 24px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;border:none;background:none;color:var(--dgray);border-bottom:3px solid transparent;transition:all .15s}
+.tab-btn:hover{color:var(--gm-blue);background:var(--gm-lightest)}
+.tab-btn.active{color:var(--gm-blue);border-bottom:3px solid var(--gm-blue);background:var(--gm-lightest)}
+.ctrl-bar{background:white;border-bottom:1px solid var(--lgray);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
 .gm-sel{background:white;border:1.5px solid var(--lgray);color:var(--black);padding:6px 10px;border-radius:2px;font-size:13px;font-weight:600;cursor:pointer}
 .gm-date{background:white;border:1.5px solid var(--lgray);color:var(--black);padding:6px 10px;border-radius:2px;font-size:13px}
 .shift-ind{display:none;background:var(--gm-lightest);border:1px solid var(--gm-light);border-radius:2px;padding:5px 10px;font-size:12px;font-weight:700;color:var(--gm-dark)}
@@ -46,9 +61,9 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);background:v
 .layout{display:flex;flex:1;position:relative}
 .main{flex:1;padding:14px 20px;transition:margin-right .3s;min-width:0}
 .main.shifted{margin-right:280px}
-.sidebar{position:fixed;top:108px;right:-280px;width:280px;height:calc(100vh - 108px);background:white;border-left:1px solid var(--lgray);overflow-y:auto;transition:right .3s;z-index:97}
+.sidebar{position:fixed;top:0;right:-280px;width:280px;height:100vh;background:white;border-left:1px solid var(--lgray);overflow-y:auto;transition:right .3s;z-index:300;padding-top:0}
 .sidebar.open{right:0}
-.sb-hdr{background:var(--gm-blue);color:white;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0}
+.sb-hdr{background:var(--gm-blue);color:white;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1}
 .sb-title{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:8px}
 .sb-close{background:none;border:none;color:rgba(255,255,255,.85);cursor:pointer;font-size:18px}
 .sb-body{padding:10px}
@@ -57,6 +72,7 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);background:v
 .ti-type{font-size:12px;color:var(--dgray);margin-top:2px}
 .ti-meta{display:flex;justify-content:space-between;margin-top:5px;font-size:11px;color:var(--dgray);font-family:monospace}
 .ti-dur{color:var(--orange);font-weight:700}
+/* OP sections */
 .op-section{margin-bottom:14px;border-radius:3px;overflow:hidden;border:1px solid var(--lgray);box-shadow:0 1px 4px rgba(0,0,0,.07)}
 .op-hdr{background:var(--gm-blue);color:white;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer;user-select:none}
 .op-hdr:hover{background:var(--gm-dark)}
@@ -99,6 +115,7 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);background:v
 .chart-tgt{position:absolute;left:0;right:0;border-top:2px dashed var(--orange);z-index:2}
 .chart-tgt-lbl{position:absolute;right:0;top:-13px;font-size:9px;color:var(--orange);font-family:monospace;font-weight:700}
 .chart-lbls{display:flex;justify-content:space-between;font-size:9px;color:var(--dgray);font-family:monospace;margin-top:3px;font-weight:600}
+/* Machine cards */
 .machine-grid{display:flex;flex-wrap:wrap;gap:10px;padding:12px}
 .mc{width:260px;flex:0 0 260px;border-radius:4px;overflow:hidden;border:2px solid var(--lgray);background:white;box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .mc-asset{padding:9px 13px;display:flex;justify-content:space-between;align-items:baseline;color:white}
@@ -127,7 +144,60 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);background:v
 .mc-down-val{font-size:17px;font-weight:800;font-family:monospace;color:#7a5800}
 .mc-down.alert .mc-down-val{color:var(--dred)}
 .mc-series-note{font-size:11px;color:var(--dgray);font-style:italic;text-align:center;padding:5px 8px;background:var(--xlgray);margin-top:9px;border-radius:2px;font-weight:600;border:1px solid var(--lgray)}
+/* Tab 2 - Losses */
+.loss-card{width:300px;flex:0 0 300px;border-radius:4px;overflow:hidden;border:1px solid var(--lgray);background:white;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.loss-hdr{padding:9px 13px;display:flex;justify-content:space-between;align-items:baseline;color:white}
+.loss-name{font-size:14px;font-weight:800}
+.loss-op{font-size:11px;opacity:.85;font-weight:600}
+.loss-body{padding:10px 12px}
+.loss-window-tabs{display:flex;gap:0;margin-bottom:10px;border:1px solid var(--lgray);border-radius:3px;overflow:hidden}
+.loss-wt{flex:1;padding:5px 8px;font-size:11px;font-weight:800;text-align:center;cursor:pointer;background:white;border:none;color:var(--dgray);text-transform:uppercase;letter-spacing:.04em}
+.loss-wt.active{background:var(--gm-blue);color:white}
+.loss-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--xlgray)}
+.loss-row:last-child{border-bottom:none}
+.loss-cat{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--black)}
+.loss-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.loss-val{font-size:13px;font-weight:800;font-family:monospace}
+.loss-min{font-size:11px;color:var(--dgray);font-family:monospace;font-weight:600}
+.loss-total-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0 3px;border-top:2px solid var(--lgray);margin-top:4px}
+.loss-total-lbl{font-size:12px;font-weight:800;text-transform:uppercase;color:var(--dgray)}
+.loss-total-val{font-size:16px;font-weight:800;font-family:monospace;color:var(--dred)}
+/* Tab 3 - Tools */
+.tool-table{width:100%;border-collapse:collapse;font-size:13px}
+.tool-table th{background:var(--gm-blue);color:white;padding:8px 12px;text-align:left;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.tool-table td{padding:7px 12px;border-bottom:1px solid var(--lgray);vertical-align:middle}
+.tool-table tr:hover td{background:var(--gm-lightest)}
+.tool-bar-wrap{width:120px;display:flex;align-items:center;gap:6px}
+.tool-bar{flex:1;height:8px;background:var(--lgray);border-radius:4px;overflow:hidden}
+.tool-bar-fill{height:100%;border-radius:4px;transition:width .3s}
+.tool-pct{font-size:11px;font-family:monospace;font-weight:700;min-width:32px}
+.tool-warn{background:var(--lyellow);color:#7a5800;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.tool-warn.critical{background:var(--lred);color:var(--dred)}
+.tool-expand-btn{background:none;border:1px solid var(--lgray);color:var(--gm-blue);font-size:11px;font-weight:700;padding:3px 8px;border-radius:2px;cursor:pointer}
+.tool-expand-btn:hover{background:var(--gm-lightest)}
+.tool-history-row{background:var(--gm-lightest)}
+.tool-history-row td{padding:0}
+.tool-history-inner{padding:10px 16px;display:none}
+.tool-history-inner.show{display:block}
+.tool-hist-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.tool-hist-table th{background:#eee;padding:5px 8px;text-align:left;font-size:11px;font-weight:700;color:var(--dgray);text-transform:uppercase}
+.tool-hist-table td{padding:5px 8px;border-bottom:1px solid #ddd}
+.tool-pred{background:var(--gm-lightest);border:1px solid var(--gm-light);border-radius:3px;padding:7px 10px;margin-top:8px;font-size:12px;font-weight:600;color:var(--gm-dark)}
+/* Tab 4 - Trade Calls */
+.trades-table{width:100%;border-collapse:collapse;font-size:13px}
+.trades-table th{background:#f0f4ff;color:var(--gm-dark);padding:8px 12px;text-align:left;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--gm-light)}
+.trades-table td{padding:8px 12px;border-bottom:1px solid var(--xlgray);vertical-align:middle}
+.trades-table tr:hover td{background:var(--gm-lightest)}
+.trade-status-active{background:#fff3e0;color:#e65100;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;white-space:nowrap}
+.trade-status-closed{background:var(--lgreen);color:#1b5e20;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;white-space:nowrap}
+.trade-dur{font-family:monospace;font-weight:700}
+.trade-dur.long{color:var(--red)}
+/* Footer */
 .gm-footer{background:#222;color:#888;padding:10px 24px;font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;flex-shrink:0;font-weight:600}
+/* PT-PM&C legend */
+.ptpmc-legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:6px 20px;background:white;border-bottom:1px solid var(--lgray);font-size:11px;font-weight:700}
+.ptpmc-item{display:flex;align-items:center;gap:4px;color:var(--dgray)}
+.ptpmc-swatch{width:12px;height:12px;border-radius:2px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -135,7 +205,7 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);background:v
   <div class="gm-logo">GM</div>
   <div>
     <div class="hdr-title-main">Manufacturing Intelligence Dashboard</div>
-    <div class="hdr-title-sub" id="hdrSub">Grand Rapids Operation</div>
+    <div class="hdr-title-sub" id="hdrSub">Manufacturing Intelligence System</div>
   </div>
   <div class="hdr-clock">
     <div class="hdr-time" id="clockTime">--:--:--</div>
@@ -147,7 +217,16 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);background:v
   <span id="msgText">Loading shift data...</span>
 </div>
 <div class="plc-banner" id="plcBanner">&#9888; PLC CONNECTION LOST - <span id="plcDetail">checking...</span></div>
-<div class="ctrl-bar">
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-production" onclick="switchTab('production')">Production</button>
+  <button class="tab-btn" id="tab-flow" onclick="switchTab('flow')">Process Flow</button>
+  <button class="tab-btn" id="tab-losses" onclick="switchTab('losses')">Losses</button>
+  <button class="tab-btn" id="tab-tools" onclick="switchTab('tools')">Tool Management</button>
+  <button class="tab-btn" id="tab-trades" onclick="switchTab('trades')">Trade Calls</button>
+</div>
+<!-- Control Bar -->
+<div class="ctrl-bar" id="ctrlBar">
   <select class="gm-sel" id="shiftSelect" onchange="handleShiftChange(this.value)" style="min-width:160px">
     <option value="current">Current Shift</option>
     <option value="prev1">1 Shift Back</option>
@@ -159,16 +238,50 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);background:v
     <option value="A">A Shift</option><option value="B">B Shift</option><option value="C">C Shift</option>
   </select>
   <div class="shift-ind" id="shiftInd"></div>
-  <button class="dl-btn" onclick="downloadExcel()">Download Excel</button>
+  <button class="dl-btn" onclick="downloadExcel()" id="dlBtn">Download Excel</button>
   <div style="margin-left:auto">
     <button class="trades-btn" onclick="toggleSidebar()">
       <span class="live-dot"></span> Active Trades <span class="trade-badge" id="tradeCount">0</span>
     </button>
   </div>
 </div>
+<!-- PT-PM&C Color Legend -->
+<div class="ptpmc-legend">
+  <div class="ptpmc-item"><div class="ptpmc-swatch" style="background:var(--ptpmc-running)"></div>Running</div>
+  <div class="ptpmc-item"><div class="ptpmc-swatch" style="background:var(--ptpmc-dressing)"></div>Dressing</div>
+  <div class="ptpmc-item"><div class="ptpmc-swatch" style="background:var(--ptpmc-blocked)"></div>Blocked</div>
+  <div class="ptpmc-item"><div class="ptpmc-swatch" style="background:#9E9E9E;border:1px solid #ccc"></div>Starved</div>
+  <div class="ptpmc-item"><div class="ptpmc-swatch" style="background:var(--ptpmc-manual)"></div>Manual</div>
+  <div class="ptpmc-item"><div class="ptpmc-swatch" style="background:var(--ptpmc-alarm)"></div>Alarm/Down</div>
+  <div class="ptpmc-item"><div class="ptpmc-swatch" style="background:var(--ptpmc-other)"></div>Other</div>
+  <div class="ptpmc-item"><div class="ptpmc-swatch" style="background:var(--ptpmc-no-comm)"></div>No Comm</div>
+</div>
 <div class="layout">
 <div class="main" id="mainContent">
-  <div id="content"><div style="padding:40px;text-align:center;color:var(--dgray);font-size:15px;font-weight:600">Connecting to API...</div></div>
+  <!-- Tab 1: Production -->
+  <div id="view-production">
+    <!-- Process Flow Strip -->
+    <div id="flow-strip" style="display:none;background:white;border-bottom:1px solid var(--lgray);padding:8px 20px;overflow-x:auto;white-space:nowrap">
+      <div id="flow-strip-inner" style="display:inline-flex;align-items:center;gap:0;min-width:max-content"></div>
+    </div>
+    <div id="content"><div style="padding:40px;text-align:center;color:var(--dgray);font-size:15px;font-weight:600">Connecting to API...</div></div>
+  </div>
+  <!-- Tab 2: Process Flow -->
+  <div id="view-flow" style="display:none">
+    <div id="flow-content"><div style="padding:40px;text-align:center;color:var(--dgray);font-size:15px;font-weight:600">Loading process flow...</div></div>
+  </div>
+  <!-- Tab 3: Losses -->
+  <div id="view-losses" style="display:none">
+    <div id="losses-content"><div style="padding:40px;text-align:center;color:var(--dgray);font-size:15px;font-weight:600">Loading losses data...</div></div>
+  </div>
+  <!-- Tab 3: Tools -->
+  <div id="view-tools" style="display:none">
+    <div id="tools-content"><div style="padding:40px;text-align:center;color:var(--dgray);font-size:15px;font-weight:600">Loading tool data...</div></div>
+  </div>
+  <!-- Tab 4: Trade Calls -->
+  <div id="view-trades" style="display:none">
+    <div id="trades-content"><div style="padding:40px;text-align:center;color:var(--dgray);font-size:15px;font-weight:600">Loading trade call history...</div></div>
+  </div>
 </div>
 <div class="sidebar" id="sidebar">
   <div class="sb-hdr">
@@ -189,6 +302,7 @@ body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);background:v
 <script>
 const API='';
 let currentShift='current';
+let currentTab='production';
 let sidebarOpen=false;
 let openPanels={};
 let collapsedOps={};
@@ -199,19 +313,51 @@ let CONFIG_CACHE=null;
 
 const RUNNING=new Set([1,15]);
 const FAULTED=new Set([3,4]);
-const STATE_MAP={
-  1:{lbl:'Running',clr:'#39B54A'},2:{lbl:'Stopped',clr:'#2371E7'},
-  3:{lbl:'Faulted (U)',clr:'#D2232B'},4:{lbl:'Faulted (A)',clr:'#971318'},
-  5:{lbl:'Pwr Off',clr:'#999'},6:{lbl:'E-Stop',clr:'#999'},
-  7:{lbl:'Blocked',clr:'#FEC710'},8:{lbl:'Starved',clr:'#F57F20'},
-  9:{lbl:'Paused',clr:'#954BF7'},10:{lbl:'Manual Ovr',clr:'#666'},
-  11:{lbl:'Hold',clr:'#F57F20'},12:{lbl:'Door Open',clr:'#999'},
-  13:{lbl:'Warmup',clr:'#4E802D'},14:{lbl:'Dressing',clr:'#4E802D'},
-  15:{lbl:'Partial Run',clr:'#39B54A'},
+
+// PT-PM&C standard color mapping
+const PTPMC_COLORS={
+  running:'#39B54A',
+  dressing:'#2d8a3e',
+  blocked:'#1565C0',
+  starved:'#9E9E9E',
+  manual:'#F9A825',
+  alarm:'#D32F2F',
+  other:'#795548',
+  no_comm:'#212121',
 };
 
-function si(id){return STATE_MAP[id]||{lbl:'State '+id,clr:'#999'}}
+// Raw state map for labels only (colors now driven by ptpmc_category)
+const STATE_MAP={
+  1:{lbl:'Running'},2:{lbl:'Stopped'},
+  3:{lbl:'Faulted (U)'},4:{lbl:'Faulted (A)'},
+  5:{lbl:'Pwr Off'},6:{lbl:'E-Stop'},
+  7:{lbl:'Blocked'},8:{lbl:'Starved'},
+  9:{lbl:'Paused'},10:{lbl:'Manual Ovr'},
+  11:{lbl:'Hold'},12:{lbl:'Door Open'},
+  13:{lbl:'Warmup'},14:{lbl:'Dressing'},
+  15:{lbl:'Partial Run'},
+};
+
+function si(sid,ptpmc){
+  const lbl=(STATE_MAP[sid]||{lbl:'State '+sid}).lbl;
+  const clr=PTPMC_COLORS[ptpmc]||PTPMC_COLORS.other;
+  return{lbl,clr};
+}
+
+// For machines API which may not have ptpmc yet, fallback to state-based
+function ptpmcFromState(sid){
+  if(sid===1||sid===15)return'running';
+  if(sid===14)return'dressing';
+  if(sid===7)return'blocked';
+  if(sid===8)return'starved';
+  if(sid===2||sid===10||sid===13)return'manual';
+  if(sid===3||sid===4||sid===5||sid===6||sid===12)return'alarm';
+  if(sid===0)return'no_comm';
+  return'other';
+}
+
 function fmt(n){return n===null||n===undefined?'-':Number(n).toLocaleString()}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function pctC(p){p=Number(p);return p>=90?'#4E802D':p>=70?'#F57F20':'#D2232B'}
 function fmtDown(m){if(!m||m<=0)return null;return m<60?Math.round(m)+' min':(m/60).toFixed(1)+' hrs'}
 
@@ -224,19 +370,166 @@ setInterval(()=>{
   document.getElementById('clockDate').textContent=days[n.getDay()]+', '+months[n.getMonth()]+' '+n.getDate()+', '+n.getFullYear();
 },1000);
 
-// Load config once for machine metadata
+// Tab switching
+function switchTab(tab){
+  currentTab=tab;
+  ['production','flow','losses','tools','trades'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+    document.getElementById('view-'+t).style.display=t===tab?'':'none';
+  });
+  const hideBar=tab==='tools'||tab==='flow'||tab==='losses';
+  document.getElementById('ctrlBar').style.display=hideBar?'none':'flex';
+  document.querySelector('.ptpmc-legend').style.display=(tab==='losses')?'none':'flex';
+  if(tab==='flow')loadProcessFlow();
+  if(tab==='losses')loadLosses();
+  if(tab==='tools')loadTools();
+  if(tab==='trades')loadTradesHistory();
+}
+
 async function loadConfig(){
-  if(CONFIG_CACHE) return CONFIG_CACHE;
+  if(CONFIG_CACHE)return CONFIG_CACHE;
   try{
     const r=await fetch(API+'/api/config');
     CONFIG_CACHE=await r.json();
-    // Update header
     const a=CONFIG_CACHE.area;
-    document.getElementById('hdrSub').textContent='Grand Rapids Operation - Dept '+a.dept+' - '+a.name;
+    document.getElementById('hdrSub').textContent=(a.plant||'')+(a.dept?' - Dept '+a.dept:'')+' - '+a.name;
     document.title='MIS - '+a.code+' '+a.name;
-    document.getElementById('footerArea').textContent='Manufacturing Intelligence Dashboard - Grand Rapids - '+a.dept+' - '+a.name;
+    document.getElementById('footerArea').textContent='Manufacturing Intelligence Dashboard - '+(a.plant||'')+' - '+(a.dept||'')+' - '+(a.name||'');
   }catch(e){CONFIG_CACHE={area:{},machines:[],breaks:{},support_codes:{}};}
   return CONFIG_CACHE;
+}
+
+async function loadProcessFlow(){
+  try{
+    const[flowRes,bufRes]=await Promise.all([
+      fetch(API+'/api/process_flow'),
+      fetch(API+'/api/buffer_state')
+    ]);
+    const flow=await flowRes.json();
+    const buffers=await bufRes.json();
+    const bufMap={};(buffers||[]).forEach(b=>bufMap[b.buffer_id]=b);
+    const nodes=(flow.nodes||[]);
+    const conns=(flow.connections||[]);
+    const nodeMap={};nodes.forEach(n=>nodeMap[n.id]=n);
+    if(!nodes.length){document.getElementById('flow-content').innerHTML='<div style="padding:40px;text-align:center;color:var(--dgray)">No process flow configured</div>';return;}
+
+    // BFS layering — assign each node to a depth layer
+    const children={};const parents={};
+    conns.forEach(c=>{
+      if(!children[c.from])children[c.from]=[];
+      children[c.from].push(c.to);
+      if(!parents[c.to])parents[c.to]=[];
+      parents[c.to].push(c.from);
+    });
+    const roots=nodes.filter(n=>!parents[n.id]);
+    const layerOf={};const queue=[...roots.map(n=>n.id)];
+    roots.forEach(n=>layerOf[n.id]=0);
+    while(queue.length){
+      const nid=queue.shift();
+      (children[nid]||[]).forEach(ch=>{
+        const nl=layerOf[nid]+1;
+        if(layerOf[ch]===undefined||layerOf[ch]<nl){layerOf[ch]=nl;queue.push(ch);}
+      });
+    }
+    const byLayer={};
+    Object.keys(layerOf).forEach(nid=>{
+      const l=layerOf[nid];
+      if(!byLayer[l])byLayer[l]=[];
+      byLayer[l].push(nid);
+    });
+    const layerKeys=Object.keys(byLayer).map(Number).sort((a,b)=>a-b);
+
+    let html='<div style="display:flex;flex-direction:column;align-items:center;padding:20px;gap:0">';
+
+    layerKeys.forEach((lk,li)=>{
+      const nids=byLayer[lk];
+
+      // Arrow row between layers
+      if(li>0){
+        const arrowCount=nids.length;
+        html+='<div style="display:flex;justify-content:center;gap:40px;padding:4px 0">';
+        for(let a=0;a<Math.max(1,arrowCount);a++) html+='<div style="font-size:20px;color:#0033A0;text-align:center;width:220px">&#9660;</div>';
+        html+='</div>';
+      }
+
+      // Node row
+      html+='<div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap">';
+      nids.forEach(nid=>{
+        const node=nodeMap[nid];if(!node)return;
+        const live=node.live||[];
+
+        if(node.type==='buffer'){
+          const buf=bufMap[nid];
+          const count=buf?buf.current_count:0;
+          const added=buf?buf.parts_added:0;
+          const consumed=buf?buf.parts_consumed:0;
+          html+='<div style="display:flex;flex-direction:column;align-items:center;width:220px">'+
+            '<div onclick="editBuffer(\''+nid+'\','+count+')" style="background:#fef9c3;border:2px solid #d97706;border-radius:6px;padding:12px 16px;text-align:center;width:100%;cursor:pointer;transition:box-shadow .15s" onmouseover="this.style.boxShadow=\'0 0 0 3px rgba(217,119,6,.3)\'" onmouseout="this.style.boxShadow=\'none\'">'+
+            '<div style="font-size:10px;font-weight:800;color:#7c5700;text-transform:uppercase;letter-spacing:.05em">'+esc(node.label)+'</div>'+
+            '<div style="font-size:32px;font-weight:800;font-family:monospace;color:#7c5700;line-height:1.1">'+fmt(count)+'</div>'+
+            '<div style="display:flex;justify-content:center;gap:12px;margin-top:4px;font-size:11px;font-family:monospace;font-weight:700">'+
+            '<span style="color:#16a34a">+'+fmt(added)+'</span>'+
+            '<span style="color:#D32F2F">-'+fmt(consumed)+'</span>'+
+            '</div>'+
+            '<div style="font-size:9px;color:#999;margin-top:4px;font-weight:600">click to edit</div>'+
+            '</div>'+
+            '<div style="font-size:10px;color:#999;margin-top:4px;text-align:center;line-height:1.3;max-width:200px">'+esc(node.note||'')+'</div>'+
+            '</div>';
+
+        } else if(node.type==='operation'){
+          const running=live.filter(m=>m.ptpmc_category==='running'||m.ptpmc_category==='dressing').length;
+          const total=live.length;
+          const sClr=running===total?'#39B54A':running===0?'#D32F2F':'#d97706';
+          const totalGood=node.total_good||0;
+          html+='<div style="display:flex;flex-direction:column;align-items:center;width:220px">'+
+            '<div style="background:#dbeafe;border:2px solid #0033A0;border-radius:6px;padding:12px 16px;text-align:center;width:100%">'+
+            '<div style="font-size:10px;font-weight:800;color:#0033A0;text-transform:uppercase;letter-spacing:.05em">'+esc(node.label.replace('\n',' '))+'</div>'+
+            '<div style="font-size:28px;font-weight:800;font-family:monospace;color:#1a1a1a;line-height:1.1">'+fmt(totalGood)+'</div>'+
+            '<div style="font-size:11px;font-weight:700;color:'+sClr+';margin-top:2px">'+running+'/'+total+' running</div>'+
+            '</div>';
+          // Machine tiles inside operation
+          if(live.length){
+            html+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;justify-content:center;max-width:220px">';
+            live.forEach(m=>{
+              const ptpmc=m.ptpmc_category||'other';
+              const clr=PTPMC_COLORS[ptpmc]||PTPMC_COLORS.other;
+              const g=Number(m.good_parts||0);
+              html+='<div title="'+(m.machine_name||m.machine_id)+' — '+ptpmc.replace('_',' ')+' — '+g+' parts" style="background:'+clr+';color:white;border-radius:3px;padding:3px 6px;font-size:10px;font-weight:700;line-height:1.2;text-align:center;min-width:44px">'+
+                '<div>'+(m.machine_name||m.machine_id).replace(/^.*_/,'')+'</div>'+
+                '<div style="font-family:monospace;font-size:11px">'+fmt(g)+'</div>'+
+                '</div>';
+            });
+            html+='</div>';
+          }
+          html+='</div>';
+
+        } else if(node.type==='output'){
+          html+='<div style="display:flex;flex-direction:column;align-items:center;width:220px">'+
+            '<div style="background:#dcfce7;border:2px solid #16a34a;border-radius:6px;padding:12px 16px;text-align:center;width:100%">'+
+            '<div style="font-size:10px;font-weight:800;color:#14532d;text-transform:uppercase;letter-spacing:.05em">'+esc(node.label.replace('\n',' '))+'</div>'+
+            '<div style="font-size:10px;color:#14532d;font-weight:600;margin-top:4px">'+esc(node.note||'Output')+'</div>'+
+            '</div></div>';
+        }
+      });
+      html+='</div>';
+    });
+    html+='</div>';
+
+    document.getElementById('flow-content').innerHTML=html;
+  }catch(e){
+    document.getElementById('flow-content').innerHTML='<div style="padding:40px;text-align:center;color:var(--dgray)">Could not load process flow: '+esc(e.message)+'</div>';
+  }
+}
+
+function editBuffer(bufferId,currentCount){
+  const val=prompt('Update buffer count for '+bufferId+'\nCurrent: '+currentCount+'\nEnter new count:',currentCount);
+  if(val===null||val==='')return;
+  const count=parseInt(val);
+  if(isNaN(count)||count<0){alert('Please enter a valid number');return;}
+  fetch(API+'/api/buffer_update',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({buffer_id:bufferId,count:count})
+  }).then(()=>loadProcessFlow()).catch(e=>alert('Could not update: '+e.message));
 }
 
 async function loadDayTotals(){
@@ -268,9 +561,9 @@ function applyManual(){
 }
 function shiftLabel(){
   const v=document.getElementById('shiftSelect').value;
-  if(v==='current')return 'Current Shift';
-  if(v==='prev1')return '1 Shift Back';
-  if(v==='prev2')return '2 Shifts Back';
+  if(v==='current')return'Current Shift';
+  if(v==='prev1')return'1 Shift Back';
+  if(v==='prev2')return'2 Shifts Back';
   return document.getElementById('manualShift').value+' Shift - '+document.getElementById('manualDate').value;
 }
 
@@ -304,9 +597,12 @@ function setMsg(type,icon,text){
   document.getElementById('msgIcon').textContent=icon;document.getElementById('msgText').textContent=text;
 }
 
-// Machine tile
+// Machine tile - now uses ptpmc_category for color
 function buildTile(m,cfgM){
-  const sid=m.state_id||0;const s=si(sid);
+  const sid=m.state_id||0;
+  const ptpmc=m.ptpmc_category||ptpmcFromState(sid);
+  const clr=PTPMC_COLORS[ptpmc]||PTPMC_COLORS.other;
+  const lbl=(STATE_MAP[sid]||{lbl:'State '+sid}).lbl;
   const isRunning=RUNNING.has(sid);const isFaulted=FAULTED.has(sid);
   const alarm=(!isRunning&&isFaulted&&(m.alarm_code||0)>0)?m.alarm_code:0;
   const cfg=CONFIG_CACHE||{support_codes:{}};
@@ -334,10 +630,10 @@ function buildTile(m,cfgM){
   }
   const downStr=fmtDown(m.down_minutes);
   const isSeries=cfgM?.series_output&&!m.series_output;
-  const t=document.createElement('div');t.className='mc';t.style.borderColor=s.clr;
+  const t=document.createElement('div');t.className='mc';t.style.borderColor=clr;
   t.innerHTML=
-    '<div class="mc-asset" style="background:'+s.clr+'"><span class="mc-asset-name">'+(m.machine_name||m.machine_id)+'</span><span class="mc-asset-type">'+(cfgM?.op_name||'')+'</span></div>'+
-    '<div class="mc-state-bar" style="background:'+s.clr+'"><span class="mc-state-lbl">'+s.lbl+'</span><span class="mc-state-extra">'+stateExtra+'</span></div>'+
+    '<div class="mc-asset" style="background:'+clr+'"><span class="mc-asset-name">'+(m.machine_name||m.machine_id)+'</span><span class="mc-asset-type">'+(cfgM?.op_name||'')+'</span></div>'+
+    '<div class="mc-state-bar" style="background:'+clr+'"><span class="mc-state-lbl">'+lbl+'</span><span class="mc-state-extra">'+stateExtra+'</span></div>'+
     '<div class="mc-body">'+
     '<div class="mc-prod-row"><span class="mc-prod-num" style="color:'+actClr+'">'+fmt(good)+'</span><span class="mc-prod-target">/ '+fmt(tgt)+'</span></div>'+
     '<div class="mc-diff-row"><span class="mc-diff" style="color:'+actClr+'">'+diffTxt+'</span><span class="mc-attain" style="color:'+pctC(attain)+'">'+attain+'%</span></div>'+
@@ -347,20 +643,463 @@ function buildTile(m,cfgM){
     '<div class="mc-stat"><div class="mc-stat-val" style="color:'+ctClr+'">'+ctVal+'</div><div class="mc-stat-lbl">CT</div></div>'+
     '<div class="mc-stat"><div class="mc-stat-val" style="color:'+pctC(ftq)+'">'+ftq+'%</div><div class="mc-stat-lbl">FTQ</div></div>'+
     '</div>'+
-    (downStr?'<div class="mc-down'+((m.down_minutes||0)>60?' alert':'')+'"><span class="mc-down-lbl">Down</span><span class="mc-down-val">'+downStr+'</span></div>':'')+
+    (downStr?'<div class="mc-down'+((m.down_minutes||0)>60?' alert':'')+'" ><span class="mc-down-lbl">Down</span><span class="mc-down-val">'+downStr+'</span></div>':'')+
     (isSeries?'<div class="mc-series-note">Series feeder - op total = last machine output</div>':'')+
     '</div>';
   return t;
 }
 
-// OP section builder - uses op_name as the group key
+// Loss card
+function buildLossCard(m,window){
+  const d=m[window]||{};
+  const ptpmc=m.ptpmc_category||ptpmcFromState(m.state_id||0);
+  const clr=PTPMC_COLORS[ptpmc]||PTPMC_COLORS.other;
+  const totalLost=(d.lost_alarm||0)+(d.lost_blocked||0)+(d.lost_starved||0)+(d.lost_manual||0)+(d.rejects||0)+(d.overtime_lost||0);
+  const actualCt=(d.parts_made&&d.run_min)?(d.run_min*60/d.parts_made).toFixed(2):'—';
+  return `<div class="loss-card">
+    <div class="loss-hdr" style="background:${clr}">
+      <span class="loss-name">${m.machine_name}</span>
+      <span class="loss-op">${m.op_name||''}</span>
+    </div>
+    <div class="loss-body">
+      <div class="loss-row" style="border-bottom:1px solid var(--xlgray);padding-bottom:4px;margin-bottom:4px">
+        <span class="loss-cat" style="font-weight:800">Parts Made</span>
+        <span style="font-weight:800;font-size:14px">${fmt(d.parts_made||0)}</span>
+      </div>
+      <div class="loss-row">
+        <span class="loss-cat"><span class="loss-dot" style="background:#D32F2F"></span>Alarm/Down</span>
+        <span><span class="loss-val" style="color:#D32F2F">${fmt(d.lost_alarm||0)}</span> <span class="loss-min">pts · ${d.alarm_min||0} min</span></span>
+      </div>
+      <div class="loss-row">
+        <span class="loss-cat"><span class="loss-dot" style="background:#1565C0"></span>Blocked</span>
+        <span><span class="loss-val" style="color:#1565C0">${fmt(d.lost_blocked||0)}</span> <span class="loss-min">pts · ${d.blocked_min||0} min</span></span>
+      </div>
+      <div class="loss-row">
+        <span class="loss-cat"><span class="loss-dot" style="background:#9E9E9E;border:1px solid #ccc"></span>Starved</span>
+        <span><span class="loss-val" style="color:#555">${fmt(d.lost_starved||0)}</span> <span class="loss-min">pts · ${d.starved_min||0} min</span></span>
+      </div>
+      <div class="loss-row">
+        <span class="loss-cat"><span class="loss-dot" style="background:#F9A825"></span>Manual</span>
+        <span><span class="loss-val" style="color:#F9A825">${fmt(d.lost_manual||0)}</span> <span class="loss-min">pts · ${d.manual_min||0} min</span></span>
+      </div>
+      <div class="loss-row">
+        <span class="loss-cat"><span class="loss-dot" style="background:#E91E90"></span>Overtime</span>
+        <span><span class="loss-val" style="color:#E91E90">${fmt(d.overtime_lost||0)}</span> <span class="loss-min">pts · CT ${actualCt}s vs ${m.rated_ct}s</span></span>
+      </div>
+      <div class="loss-row">
+        <span class="loss-cat"><span class="loss-dot" style="background:#7B1FA2"></span>Rejects</span>
+        <span><span class="loss-val" style="color:#7B1FA2">${fmt(d.rejects||0)}</span> <span class="loss-min">parts</span></span>
+      </div>
+      <div class="loss-total-row">
+        <span class="loss-total-lbl">Total Lost</span>
+        <span class="loss-total-val">${fmt(totalLost)}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+let lossesData=[];
+let lossWindow='shift';
+let lossView='cards';
+let lossExcludeWeekends=false;
+let lossCustomFrom='';
+let lossCustomTo='';
+
+async function loadLosses(){
+  try{
+    let url=API+'/api/losses?shift='+currentShift;
+    if(lossWindow==='custom'&&lossCustomFrom&&lossCustomTo){
+      url=API+'/api/losses?from='+lossCustomFrom+'&to='+lossCustomTo;
+      if(lossExcludeWeekends)url+='&exclude_weekends=1';
+    }
+    const r=await fetch(url);
+    lossesData=await r.json();
+    renderLosses();
+  }catch(e){
+    document.getElementById('losses-content').innerHTML='<div style="padding:40px;text-align:center;color:var(--red);font-weight:600">Could not load losses data — check API is running and data exists for this shift</div>';
+  }
+}
+
+function lossBtn(label,val,field){
+  const active=field==='view'?(lossView===val):(lossWindow===val);
+  return `<button onclick="setLoss('${field}','${val}')" style="padding:5px 14px;font-size:12px;font-weight:800;border-radius:2px;cursor:pointer;border:1.5px solid var(--gm-blue);background:${active?'var(--gm-blue)':'white'};color:${active?'white':'var(--gm-blue)'}">${label}</button>`;
+}
+
+function renderLosses(){
+  if(!lossesData.length&&lossWindow!=='custom'){document.getElementById('losses-content').innerHTML='<div style="padding:40px;text-align:center;color:var(--dgray)">No losses data</div>';return;}
+  const opGroups={};const opOrder=[];
+  lossesData.forEach(m=>{
+    const k=m.op_name||m.op;
+    if(!opGroups[k]){opGroups[k]=[];opOrder.push(k);}
+    opGroups[k].push(m);
+  });
+
+  const today=new Date().toISOString().slice(0,10);
+  let html='<div style="padding:12px 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
+  html+='<span style="font-size:12px;font-weight:800;color:var(--dgray);text-transform:uppercase;letter-spacing:.05em">Period:</span>';
+  html+=lossBtn('This Shift','shift','window')+lossBtn('Today','today','window')+lossBtn('Custom Range','custom','window');
+  if(lossWindow==='custom'){
+    html+='<span style="width:1px;height:24px;background:var(--lgray);margin:0 2px"></span>';
+    html+=`<input type="date" value="${lossCustomFrom||today}" onchange="lossCustomFrom=this.value" style="padding:4px 8px;font-size:12px;font-weight:600;border:1.5px solid var(--lgray);border-radius:2px">`;
+    html+=`<span style="font-size:12px;font-weight:700;color:var(--dgray)">to</span>`;
+    html+=`<input type="date" value="${lossCustomTo||today}" onchange="lossCustomTo=this.value" style="padding:4px 8px;font-size:12px;font-weight:600;border:1.5px solid var(--lgray);border-radius:2px">`;
+    html+=`<button onclick="loadLosses()" style="padding:5px 14px;font-size:12px;font-weight:800;border-radius:2px;cursor:pointer;border:1.5px solid var(--green);background:var(--green);color:white">Go</button>`;
+    html+=`<label style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--dgray);cursor:pointer">
+      <input type="checkbox" ${lossExcludeWeekends?'checked':''} onchange="lossExcludeWeekends=this.checked"> Exclude Weekends</label>`;
+  }
+  html+='<span style="width:1px;height:24px;background:var(--lgray);margin:0 6px"></span>';
+  html+='<span style="font-size:12px;font-weight:800;color:var(--dgray);text-transform:uppercase;letter-spacing:.05em">View:</span>';
+  html+=lossBtn('Cards','cards','view')+lossBtn('By Operation','op_bars','view')+lossBtn('By Machine','machine_bars','view');
+  html+='<span style="width:1px;height:24px;background:var(--lgray);margin:0 6px"></span>';
+  html+=`<button onclick="downloadLosses()" style="padding:5px 14px;font-size:12px;font-weight:800;border-radius:2px;cursor:pointer;border:1.5px solid var(--green);background:var(--green);color:white">&#8595; Download Excel</button>`;
+  html+='</div>';
+
+  // Legend
+  html+='<div style="display:flex;gap:14px;padding:4px 0 12px;font-size:11px;font-weight:700;flex-wrap:wrap">';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#39B54A"></span>Running</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#D32F2F"></span>Alarm/Down</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#1565C0"></span>Blocked</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#9E9E9E"></span>Starved</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#F9A825"></span>Manual</span>';
+  html+='<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:#E91E90"></span>Overtime</span>';
+  html+='</div>';
+
+  if(lossView==='cards'){
+    opOrder.forEach(opName=>{
+      const opKey=opName.replace(/[^a-zA-Z0-9]/g,'_');
+      html+=`<div class="op-section"><div class="op-hdr" onclick="toggleOp('${opKey}')">
+        <span class="op-name">${opName}</span>
+        <span class="toggle-icon" id="op-icon-${opKey}">&#9660;</span>
+      </div><div class="op-body" id="op-body-${opKey}">
+      <div class="machine-grid" style="padding:12px">`;
+      opGroups[opName].forEach(m=>{html+=buildLossCard(m,lossWindow);});
+      html+=`</div></div></div>`;
+    });
+  } else if(lossView==='op_bars'){
+    html+=renderOpBars(opGroups,opOrder);
+  } else if(lossView==='machine_bars'){
+    html+=renderMachineBars(opGroups,opOrder);
+  }
+
+  document.getElementById('losses-content').innerHTML=html;
+}
+
+function setLoss(field,val){
+  if(field==='view'){lossView=val;renderLosses();}
+  else{
+    lossWindow=val;
+    if(val==='custom'){
+      if(!lossCustomFrom)lossCustomFrom=new Date().toISOString().slice(0,10);
+      if(!lossCustomTo)lossCustomTo=new Date().toISOString().slice(0,10);
+      renderLosses();
+    } else {
+      loadLosses();
+    }
+  }
+}
+
+function downloadLosses(){
+  if(!lossesData.length){alert('No data to download');return;}
+  const w=lossWindow==='custom'?'custom':lossWindow;
+  const rows=lossesData.map(m=>{
+    const d=m[w]||m.shift||{};
+    return{
+      'Machine ID':m.machine_id,'Machine':m.machine_name,'Operation':m.op_name||m.op,
+      'Rated CT (s)':m.rated_ct||0,'Parts Made':d.parts_made||0,'Run Time (min)':d.run_min||0,
+      'Actual CT (s)':(d.parts_made&&d.run_min)? +(d.run_min*60/d.parts_made).toFixed(2):0,
+      'Alarm/Down (min)':d.alarm_min||0,'Alarm Lost (pts)':d.lost_alarm||0,
+      'Blocked (min)':d.blocked_min||0,'Blocked Lost (pts)':d.lost_blocked||0,
+      'Starved (min)':d.starved_min||0,'Starved Lost (pts)':d.lost_starved||0,
+      'Manual (min)':d.manual_min||0,'Manual Lost (pts)':d.lost_manual||0,
+      'Overtime Lost (pts)':d.overtime_lost||0,
+      'Rejects':d.rejects||0,
+      'Total Lost':(d.lost_alarm||0)+(d.lost_blocked||0)+(d.lost_starved||0)+(d.lost_manual||0)+(d.rejects||0)+(d.overtime_lost||0)
+    };
+  });
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Losses');
+  const period=w==='custom'?(lossCustomFrom+'_to_'+lossCustomTo):w;
+  const area=(CONFIG_CACHE||{}).area?.name||'Area';
+  XLSX.writeFile(wb,area.replace(/[^a-zA-Z0-9]/g,'_')+'_Losses_'+period+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+function renderOpBars(opGroups,opOrder){
+  let html='<div style="display:flex;flex-direction:column;gap:12px">';
+  // Find max total minutes across ops for scaling
+  let maxMin=0;
+  const opData=[];
+  opOrder.forEach(opName=>{
+    const machines=opGroups[opName];
+    let alarm=0,blocked=0,starved=0,manual=0,running=0,overtime=0,parts=0;
+    machines.forEach(m=>{
+      const d=m[lossWindow]||{};
+      alarm+=d.alarm_min||0;
+      blocked+=d.blocked_min||0;
+      starved+=d.starved_min||0;
+      manual+=d.manual_min||0;
+      running+=d.run_min||0;
+      overtime+=d.overtime_lost||0;
+      parts+=d.parts_made||0;
+    });
+    if(!running){
+      const totalLoss=alarm+blocked+starved+manual;
+      const shiftMin=lossWindow==='shift'?480:lossWindow==='today'?1440:10080;
+      running=Math.max(0,(shiftMin*machines.length)-totalLoss);
+    }
+    const total=running+alarm+blocked+starved+manual;
+    if(total>maxMin)maxMin=total;
+    opData.push({opName,alarm,blocked,starved,manual,running,overtime,parts,total,count:machines.length});
+  });
+
+  opData.forEach(op=>{
+    const pct=p=>maxMin>0?((p/maxMin)*100).toFixed(1):0;
+    const tp=v=>op.total>0?((v/op.total)*100).toFixed(1):'0.0';
+    html+=`<div style="border:1px solid var(--lgray);border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+      <div style="background:var(--gm-blue);color:white;padding:8px 16px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center">
+        <span>${esc(op.opName)}</span>
+        <span style="font-size:11px;font-weight:600;opacity:.8">${op.count} machines · ${fmt(op.parts)} parts · ${fmt(Math.round(op.total))} total min</span>
+      </div>
+      <div style="padding:12px 16px">
+        <div style="display:flex;height:36px;border-radius:3px;overflow:hidden;background:var(--xlgray)">
+          <div title="Running: ${op.running.toFixed(1)} min (${tp(op.running)}%)" style="width:${pct(op.running)}%;background:#39B54A;transition:width .3s"></div>
+          <div title="Alarm/Down: ${op.alarm.toFixed(1)} min (${tp(op.alarm)}%)" style="width:${pct(op.alarm)}%;background:#D32F2F;transition:width .3s"></div>
+          <div title="Blocked: ${op.blocked.toFixed(1)} min (${tp(op.blocked)}%)" style="width:${pct(op.blocked)}%;background:#1565C0;transition:width .3s"></div>
+          <div title="Starved: ${op.starved.toFixed(1)} min (${tp(op.starved)}%)" style="width:${pct(op.starved)}%;background:#9E9E9E;transition:width .3s"></div>
+          <div title="Manual: ${op.manual.toFixed(1)} min (${tp(op.manual)}%)" style="width:${pct(op.manual)}%;background:#F9A825;transition:width .3s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;font-weight:700;font-family:monospace;flex-wrap:wrap;gap:4px">
+          <span style="color:#39B54A">Running ${op.running.toFixed(0)}m (${tp(op.running)}%)</span>
+          <span style="color:#D32F2F">Alarm ${op.alarm.toFixed(0)}m (${tp(op.alarm)}%)</span>
+          <span style="color:#1565C0">Blocked ${op.blocked.toFixed(0)}m (${tp(op.blocked)}%)</span>
+          <span style="color:#666">Starved ${op.starved.toFixed(0)}m (${tp(op.starved)}%)</span>
+          <span style="color:#F9A825">Manual ${op.manual.toFixed(0)}m (${tp(op.manual)}%)</span>
+          <span style="color:#E91E90">Overtime ${fmt(op.overtime)} pts</span>
+        </div>
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  return html;
+}
+
+function renderMachineBars(opGroups,opOrder){
+  let html='';
+  // Find global max for consistent scaling
+  let maxMin=0;
+  lossesData.forEach(m=>{
+    const d=m[lossWindow]||{};
+    const shiftMin=lossWindow==='shift'?480:lossWindow==='today'?1440:10080;
+    const loss=(d.alarm_min||0)+(d.blocked_min||0)+(d.starved_min||0)+(d.manual_min||0);
+    const total=Math.max(shiftMin,loss);
+    if(total>maxMin)maxMin=total;
+  });
+
+  opOrder.forEach(opName=>{
+    const machines=opGroups[opName];
+    const opKey=opName.replace(/[^a-zA-Z0-9]/g,'_');
+    html+=`<div style="border:1px solid var(--lgray);border-radius:3px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:12px">
+      <div style="background:var(--gm-blue);color:white;padding:8px 16px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;cursor:pointer" onclick="toggleOp('mb_${opKey}')">
+        <span>${esc(opName)}</span>
+        <span style="font-size:13px;margin-left:8px" id="op-icon-mb_${opKey}">&#9660;</span>
+      </div>
+      <div class="op-body" id="op-body-mb_${opKey}" style="padding:12px 16px">`;
+
+    machines.forEach(m=>{
+      const d=m[lossWindow]||{};
+      const alarm=d.alarm_min||0;
+      const blocked=d.blocked_min||0;
+      const starved=d.starved_min||0;
+      const manual=d.manual_min||0;
+      const overtime=d.overtime_lost||0;
+      const partsMade=d.parts_made||0;
+      const runMin=d.run_min||0;
+      const totalLoss=alarm+blocked+starved+manual;
+      const shiftMin=lossWindow==='shift'?480:lossWindow==='today'?1440:10080;
+      const running=runMin||Math.max(0,shiftMin-totalLoss);
+      const total=running+totalLoss;
+      const pct=p=>maxMin>0?((p/maxMin)*100).toFixed(1):0;
+      const tp=v=>total>0?((v/total)*100).toFixed(1):'0.0';
+      const lossPct=total>0?((totalLoss/total)*100).toFixed(1):0;
+
+      html+=`<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:12px;font-weight:800">${esc(m.machine_name)}</span>
+          <span style="font-size:11px;font-family:monospace;font-weight:700">${fmt(partsMade)} parts · <span style="color:${Number(lossPct)>30?'#D32F2F':Number(lossPct)>15?'#d97706':'#39B54A'}">${lossPct}% loss</span></span>
+        </div>
+        <div style="display:flex;height:24px;border-radius:3px;overflow:hidden;background:var(--xlgray)">
+          <div title="Running: ${running.toFixed(1)} min (${tp(running)}%)" style="width:${pct(running)}%;background:#39B54A"></div>
+          <div title="Alarm/Down: ${alarm.toFixed(1)} min (${tp(alarm)}%)" style="width:${pct(alarm)}%;background:#D32F2F"></div>
+          <div title="Blocked: ${blocked.toFixed(1)} min (${tp(blocked)}%)" style="width:${pct(blocked)}%;background:#1565C0"></div>
+          <div title="Starved: ${starved.toFixed(1)} min (${tp(starved)}%)" style="width:${pct(starved)}%;background:#9E9E9E"></div>
+          <div title="Manual: ${manual.toFixed(1)} min (${tp(manual)}%)" style="width:${pct(manual)}%;background:#F9A825"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:3px;font-size:10px;font-family:monospace;font-weight:600;color:var(--dgray)">
+          <span style="color:#D32F2F">${alarm.toFixed(0)}m alarm (${tp(alarm)}%)</span>
+          <span style="color:#1565C0">${blocked.toFixed(0)}m blocked (${tp(blocked)}%)</span>
+          <span style="color:#666">${starved.toFixed(0)}m starved (${tp(starved)}%)</span>
+          <span style="color:#F9A825">${manual.toFixed(0)}m manual (${tp(manual)}%)</span>
+          <span style="color:#E91E90">${fmt(overtime)} overtime</span>
+          <span style="color:#7B1FA2">${fmt(d.rejects||0)} rejects</span>
+        </div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+  return html;
+}
+
+// Tool Management Tab
+let toolsData=[];
+let toolHistoryData=[];
+let expandedTools={};
+
+async function loadTools(){
+  try{
+    const[tr,hr]=await Promise.all([
+      fetch(API+'/api/tool_current'),
+      fetch(API+'/api/tool_history?limit=10')
+    ]);
+    toolsData=await tr.json();
+    toolHistoryData=await hr.json();
+    renderTools();
+  }catch(e){
+    document.getElementById('tools-content').innerHTML='<div style="padding:40px;text-align:center;color:var(--red);font-weight:600">Could not load tool data</div>';
+  }
+}
+
+function renderTools(){
+  if(!toolsData.length){document.getElementById('tools-content').innerHTML='<div style="padding:40px;text-align:center;color:var(--dgray)">No tool data available</div>';return;}
+  const cfg=CONFIG_CACHE||{};
+  const cfgMachines=cfg.machines||[];
+  const opGroups={};const opOrder=[];
+  toolsData.forEach(m=>{
+    const k=m.op_name||m.op;
+    if(!opGroups[k]){opGroups[k]=[];opOrder.push(k);}
+    opGroups[k].push(m);
+  });
+
+  let html='';
+  opOrder.forEach(opName=>{
+    const opKey=opName.replace(/[^a-zA-Z0-9]/g,'_');
+    html+=`<div class="op-section" style="margin-bottom:14px">
+      <div class="op-hdr" onclick="toggleOp('${opKey}')">
+        <span class="op-name">${opName}</span>
+        <span class="toggle-icon" id="op-icon-${opKey}">&#9660;</span>
+      </div>
+      <div class="op-body" id="op-body-${opKey}" style="padding:0">
+      <table class="tool-table">
+        <thead><tr>
+          <th>Machine</th><th>Slot</th><th>Count</th><th>Limit</th><th>Remaining</th><th>Usage</th><th>Last Changed</th><th>Avg Life</th><th></th>
+        </tr></thead><tbody>`;
+
+    opGroups[opName].forEach(m=>{
+      const cfgM=cfgMachines.find(c=>c.id===m.machine_id)||{};
+      const toolConfig=(cfgM.tools)||{};
+      const activeTools=m.tools.filter(t=>t.count>0||t.avg_life>0);
+      if(!activeTools.length){
+        html+=`<tr><td>${m.machine_name}</td><td colspan="8" style="color:var(--dgray);font-style:italic">No active tools</td></tr>`;
+        return;
+      }
+      activeTools.forEach((tl,idx)=>{
+        const slotKey=`${m.machine_id}_T${tl.slot}`;
+        const tcfg=toolConfig[`T${tl.slot}`]||{};
+        const limit=tcfg.limit||0;
+        const warn=tcfg.warning||0;
+        const desc=tcfg.description||`Tool T${tl.slot}`;
+        const rem=limit>0?(limit-tl.count):null;
+        const pct=limit>0?Math.min(100,Math.round(tl.count/limit*100)):tl.pct_used||0;
+        const barClr=pct>=90?'#D32F2F':pct>=70?'#F57F20':'#39B54A';
+        const isWarning=warn>0&&rem!==null&&rem<=warn;
+        const isCritical=warn>0&&rem!==null&&rem<=warn*0.5;
+
+        // Last change from history
+        const hist=toolHistoryData.filter(h=>h.machine_id===m.machine_id&&h.tool_slot===tl.slot);
+        const lastChange=hist.length>0?hist[0].timestamp.slice(0,16).replace('T',' '):'Never';
+        const avgLife=tl.avg_life>0?tl.avg_life.toLocaleString():'-';
+
+        const isFirst=idx===0;
+        html+=`<tr>
+          ${isFirst?`<td rowspan="${activeTools.length}" style="font-weight:800;vertical-align:top;padding-top:12px">${m.machine_name}</td>`:''}
+          <td style="font-family:monospace;font-weight:700">${desc}</td>
+          <td style="font-family:monospace;font-weight:800">${tl.count.toLocaleString()}</td>
+          <td style="font-family:monospace;color:var(--dgray)">${limit>0?limit.toLocaleString():'-'}</td>
+          <td style="font-family:monospace;font-weight:800;color:${pct>=90?'#D32F2F':pct>=70?'#F57F20':'#39B54A'}">${rem!==null?rem.toLocaleString():'-'}</td>
+          <td>
+            <div class="tool-bar-wrap">
+              <div class="tool-bar"><div class="tool-bar-fill" style="width:${pct}%;background:${barClr}"></div></div>
+              <span class="tool-pct" style="color:${barClr}">${pct}%</span>
+            </div>
+            ${isWarning?`<span class="tool-warn${isCritical?' critical':''}">⚠ ${isCritical?'Critical':'Warning'}</span>`:''}
+          </td>
+          <td style="font-size:12px;font-family:monospace;color:var(--dgray)">${lastChange}</td>
+          <td style="font-family:monospace;color:var(--dgray)">${avgLife}</td>
+          <td><button class="tool-expand-btn" onclick="toggleToolHistory('${slotKey}')">History</button></td>
+        </tr>
+        <tr class="tool-history-row" id="hist-row-${slotKey}"><td colspan="9">
+          <div class="tool-history-inner" id="hist-inner-${slotKey}">
+            ${buildToolHistory(m.machine_id,tl.slot)}
+          </div>
+        </td></tr>`;
+      });
+    });
+    html+=`</tbody></table></div></div>`;
+  });
+  document.getElementById('tools-content').innerHTML=html;
+}
+
+function buildToolHistory(machineId,slot){
+  const hist=toolHistoryData.filter(h=>h.machine_id===machineId&&h.tool_slot===slot).slice(0,10);
+  if(!hist.length)return'<div style="font-size:12px;color:var(--dgray);padding:8px 0">No change history yet</div>';
+  let h=`<div style="font-size:11px;font-weight:700;color:var(--dgray);text-transform:uppercase;margin-bottom:6px">Last ${hist.length} Tool Changes</div>
+  <table class="tool-hist-table">
+    <thead><tr><th>#</th><th>Date/Time</th><th>Parts Run</th><th>Shift</th><th>Reason</th><th>Notes</th></tr></thead><tbody>`;
+  hist.forEach((r,i)=>{
+    h+=`<tr>
+      <td>${i+1}</td>
+      <td>${r.timestamp.slice(0,16).replace('T',' ')}</td>
+      <td style="font-family:monospace;font-weight:700">${(r.parts_run||0).toLocaleString()}</td>
+      <td>${r.shift_letter||'-'}</td>
+      <td><span style="font-size:11px;padding:2px 6px;border-radius:10px;background:${r.reason==='tool_life_utilized'?'#e8f5e9':'#fff3e0'};color:${r.reason==='tool_life_utilized'?'#2d5a16':'#7a3c00'};font-weight:700">${r.reason==='tool_life_utilized'?'Life Utilized':'Other'}</span></td>
+      <td style="font-size:11px;color:var(--dgray)">${r.notes||'-'}</td>
+    </tr>`;
+  });
+  // Prediction
+  if(hist.length>=2){
+    const avgParts=Math.round(hist.reduce((s,r)=>s+(r.parts_run||0),0)/hist.length);
+    const lastTs=new Date(hist[0].timestamp);
+    const curCount=toolsData.find(m=>m.machine_id===machineId)?.tools.find(t=>t.slot===slot)?.count||0;
+    const remaining=avgParts-curCount;
+    if(remaining>0){
+      const partsPerShift=toolsData.find(m=>m.machine_id===machineId)?.tools.find(t=>t.slot===slot)?.avg_life||avgParts;
+      const shiftsLeft=Math.max(0,(remaining/partsPerShift)).toFixed(1);
+      h+=`</tbody></table><div class="tool-pred">
+        &#128200; <strong>Prediction:</strong> Based on avg life of ${avgParts.toLocaleString()} parts,
+        estimated <strong>${remaining.toLocaleString()} parts remaining</strong> (~${shiftsLeft} shifts).
+      </div>`;
+    }else{
+      h+=`</tbody></table><div class="tool-pred" style="border-color:#D32F2F;background:#ffebee;color:#D32F2F">
+        &#9888; <strong>Tool life exceeded</strong> — change recommended.
+      </div>`;
+    }
+  }else{
+    h+=`</tbody></table>`;
+  }
+  return h;
+}
+
+function toggleToolHistory(slotKey){
+  const inner=document.getElementById('hist-inner-'+slotKey);
+  if(inner)inner.classList.toggle('show');
+}
+
+// OP section builder
 function buildOP(opName,machines,opTotals,dayTotals){
   const ot=opTotals[opName]||{good:0,bad:0,expected:0,pct:0,shift_target:0};
   const dt=(dayTotals.totals||{})[opName]||{good:0,bad:0};
   const pct=Number(ot.pct||0);
   const pfC=pct>=90?'g':pct>=70?'y':'r';
-  const shTgt=ot.shift_target||0;
-  const dayTgt=shTgt*3;
+  const shTgt=ot.shift_target||0;const dayTgt=shTgt*3;
   const sg=Number(ot.good||0),sb=Number(ot.bad||0);
   const shFtq=(sg+sb)>0?((sg/(sg+sb))*100).toFixed(1):'-';
   const shFtqC=Number(shFtq)>=99?'#39B54A':Number(shFtq)>=97?'#F57F20':'#D2232B';
@@ -386,12 +1125,10 @@ function buildOP(opName,machines,opTotals,dayTotals){
     '<div style="display:flex;gap:6px" onclick="event.stopPropagation()">'+
     '<button class="panel-btn" onclick="event.stopPropagation();togglePanel(\'trend-'+opKey+'\',\''+opName+'\',\'trend\')">Hourly</button>'+
     '<button class="panel-btn" onclick="event.stopPropagation();togglePanel(\'oee-'+opKey+'\',\''+opName+'\',\'oee\')">OEE</button>'+
-    '<button class="panel-btn" onclick="event.stopPropagation();togglePanel(\'tools-'+opKey+'\',\''+opName+'\',\'tools\')">Tools</button>'+
     '</div></div></div>'+
     '<div class="op-body" id="op-body-'+opKey+'">'+
     '<div class="op-panel" id="trend-'+opKey+'"></div>'+
     '<div class="op-panel" id="oee-'+opKey+'"></div>'+
-    '<div class="op-panel" id="tools-'+opKey+'"></div>'+
     '<div class="machine-grid" id="mg-'+opKey+'"></div></div>';
 
   const mg=sec.querySelector('#mg-'+opKey);
@@ -413,13 +1150,14 @@ function toggleOp(opKey){
 function buildOeePanel(opKey,opName,machines){
   let h='<div class="panel-hd"><span class="panel-title">OEE - '+opName+'</span><button class="panel-close" onclick="closePanel(\'oee-'+opKey+'\')">X</button></div><div class="oee-grid">';
   machines.forEach(m=>{
-    const s=si(m.state_id||0);
+    const ptpmc=m.ptpmc_category||ptpmcFromState(m.state_id||0);
+    const clr=PTPMC_COLORS[ptpmc]||PTPMC_COLORS.other;
     const oee=m.oee!=null?m.oee.toFixed(1)+'%':'-';
     const a=m.availability!=null?(m.availability*100).toFixed(1):'-';
     const p=m.performance!=null?(m.performance*100).toFixed(1):'-';
     const q=m.quality!=null?(m.quality*100).toFixed(1):'-';
-    const clr=m.oee!=null?pctC(m.oee):'#999';
-    h+='<div class="oee-item" style="border-left:4px solid '+s.clr+'"><div class="oee-nm">'+(m.machine_name||m.machine_id)+'</div><div class="oee-val" style="color:'+clr+'">'+oee+'</div><div class="oee-apq"><span>A: '+a+'%</span><span>P: '+p+'%</span><span>Q: '+q+'%</span></div></div>';
+    const ocl=m.oee!=null?pctC(m.oee):'#999';
+    h+='<div class="oee-item" style="border-left:4px solid '+clr+'"><div class="oee-nm">'+(m.machine_name||m.machine_id)+'</div><div class="oee-val" style="color:'+ocl+'">'+oee+'</div><div class="oee-apq"><span>A: '+a+'%</span><span>P: '+p+'%</span><span>Q: '+q+'%</span></div></div>';
   });
   return h+'</div>';
 }
@@ -446,33 +1184,12 @@ async function getMachinesForOp(opName){
 }
 async function showOee(opKey,opName){const p=document.getElementById('oee-'+opKey);const m=await getMachinesForOp(opName);p.innerHTML=buildOeePanel(opKey,opName,m);p.classList.add('show');openPanels['oee-'+opKey]={type:'oee',opKey,opName};}
 async function showTrend(opKey,opName){const p=document.getElementById('trend-'+opKey);const m=await getMachinesForOp(opName);p.innerHTML=buildTrendPanel(opKey,opName,m);p.classList.add('show');openPanels['trend-'+opKey]={type:'trend',opKey,opName};}
-async function showTools(opKey,opName){
-  const panel=document.getElementById('tools-'+opKey);
-  try{
-    const[machRes,toolRes]=await Promise.all([fetch(API+'/api/machines?shift=current'),fetch(API+'/api/tool_current')]);
-    const machines=await machRes.json();const toolData=await toolRes.json();
-    const opTools=toolData.filter(t=>t.op_name===opName);
-    if(!opTools.length){panel.innerHTML='<div class="panel-hd"><span class="panel-title">Tool Counters - '+opName+'</span><button class="panel-close" onclick="closePanel(\'tools-'+opKey+'\')">X</button></div><div style="color:var(--dgray);padding:16px;font-size:13px;font-weight:600">No tool data available yet</div>';panel.classList.add('show');return;}
-    let h='<div class="panel-hd"><span class="panel-title">Tool Counters - '+opName+'</span><button class="panel-close" onclick="closePanel(\'tools-'+opKey+'\')">X</button></div><div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px">';
-    opTools.forEach(t=>{
-      const activeCols=t.tools.filter(tl=>tl.avg_life>0||tl.count>0);const cols=activeCols.length||1;
-      h+='<div style="background:white;border:1px solid var(--lgray);border-radius:3px;padding:10px 14px;min-width:200px;flex:1"><div style="font-size:12px;font-weight:800;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--lgray)">'+t.machine_name+'</div><div style="display:grid;grid-template-columns:repeat('+Math.min(cols,4)+',1fr);gap:6px">';
-      t.tools.forEach((tl,idx)=>{
-        if(tl.count===0&&tl.avg_life===0)return;
-        const pct=tl.pct_used;const clr=pct>=90?'var(--red)':pct>=70?'var(--orange)':'var(--green)';const barPct=Math.min(100,pct||0);
-        h+='<div style="text-align:center;padding:6px 4px;border:1px solid var(--lgray);border-radius:3px"><div style="font-size:10px;font-weight:700;color:var(--dgray);text-transform:uppercase;margin-bottom:4px">T'+idx+'</div><div style="font-size:18px;font-weight:800;font-family:monospace;color:'+clr+'">'+tl.count.toLocaleString()+'</div><div style="font-size:10px;color:var(--dgray);margin:2px 0">'+(tl.avg_life>0?'avg '+tl.avg_life.toLocaleString():'no avg yet')+'</div>'+(tl.avg_life>0?'<div style="background:var(--lgray);height:4px;border-radius:2px;margin-top:4px;overflow:hidden"><div style="width:'+barPct+'%;height:100%;background:'+clr+';border-radius:2px"></div></div><div style="font-size:10px;font-weight:700;color:'+clr+';margin-top:2px">'+pct+'% used</div>':'')+'</div>';
-      });
-      h+='</div></div>';
-    });
-    h+='</div>';panel.innerHTML=h;panel.classList.add('show');openPanels['tools-'+opKey]={type:'tools',opKey,opName};
-  }catch(e){panel.innerHTML='<div style="padding:16px;color:var(--red);font-weight:600">Could not load tool data</div>';panel.classList.add('show');}
-}
 function closePanel(id){const p=document.getElementById(id);if(!p)return;p.classList.remove('show');p.innerHTML='';delete openPanels[id];}
 function togglePanel(panelId,opName,type){
   const panel=document.getElementById(panelId);if(!panel)return;
   const opKey=panelId.split('-').slice(1).join('-');
   if(panel.classList.contains('show')){closePanel(panelId);}
-  else{if(type==='trend')showTrend(opKey,opName);else if(type==='oee')showOee(opKey,opName);else if(type==='tools')showTools(opKey,opName);}
+  else{if(type==='trend')showTrend(opKey,opName);else if(type==='oee')showOee(opKey,opName);}
 }
 
 // Excel download
@@ -481,8 +1198,10 @@ async function downloadExcel(){
   const wb=XLSX.utils.book_new();const label=shiftLabel();const cfgM=(CONFIG_CACHE||{}).machines||[];
   const machRows=lastMachines.map(m=>{
     const c=cfgM.find(x=>x.id===m.machine_id);const g=m.good_shift||0,b=m.bad_shift||0;
-    const ftq=(g+b)>0?((g/(g+b))*100).toFixed(1)+'%':'-';const s=si(m.state_id||0);
-    return{'Machine ID':m.machine_id,'Machine':m.machine_name||'','Op Name':m.op_name||'','State':s.lbl,'Good Parts':g,'Shift Target':m.shift_target||'','Attain %':(m.expected_now||0)>0?Math.round(g/m.expected_now*100)+'%':'-','Rejects':b,'FTQ %':ftq,'OEE %':m.oee!=null?m.oee.toFixed(1)+'%':'-','Down (min)':m.down_minutes||0};
+    const ftq=(g+b)>0?((g/(g+b))*100).toFixed(1)+'%':'-';
+    const ptpmc=m.ptpmc_category||ptpmcFromState(m.state_id||0);
+    const lbl=(STATE_MAP[m.state_id||0]||{lbl:'State '+(m.state_id||0)}).lbl;
+    return{'Machine ID':m.machine_id,'Machine':m.machine_name||'','Op Name':m.op_name||'','State':lbl,'PT-PM&C Category':ptpmc,'Good Parts':g,'Shift Target':m.shift_target||'','Attain %':(m.expected_now||0)>0?Math.round(g/m.expected_now*100)+'%':'-','Rejects':b,'FTQ %':ftq,'OEE %':m.oee!=null?m.oee.toFixed(1)+'%':'-','Down (min)':m.down_minutes||0};
   });
   const ws1=XLSX.utils.json_to_sheet(machRows);XLSX.utils.book_append_sheet(wb,ws1,'Machine Summary');
   const opRows=Object.entries(lastOpTotals).map(([name,ot])=>{
@@ -513,7 +1232,6 @@ async function loadAll(){
     const hm={};trendData.forEach(r=>{if(!hm[r.machine_id])hm[r.machine_id]=[];hm[r.machine_id].push({hour:r.hour,parts:r.parts});});
     machines.forEach(m=>{m.hourly_data=hm[m.machine_id]||[];});
 
-    // Group machines by op_name (from API response)
     const opGroups={};const opOrder=[];
     machines.forEach(m=>{
       const key=m.op_name;
@@ -521,7 +1239,7 @@ async function loadAll(){
       opGroups[key].push(m);
     });
 
-    // Trades sidebar
+    // Trades
     const tc=trades.length;
     document.getElementById('tradeCount').textContent=tc;
     document.getElementById('sbCount').textContent=tc;
@@ -529,7 +1247,7 @@ async function loadAll(){
       ?'<div style="font-size:13px;color:var(--dgray);text-align:center;padding:20px 0;font-weight:600">No active trade calls</div>'
       :trades.map(t=>'<div class="trade-item"><div class="ti-machine">'+t.machine_name+'</div><div class="ti-type">'+t.support_short+'</div><div class="ti-meta"><span>'+t.called_at+'</span><span class="ti-dur">'+t.duration_min+' min</span></div></div>').join('');
 
-    // Build content
+    // Build production tab
     const content=document.getElementById('content');content.innerHTML='';
     opOrder.forEach(opName=>{
       const opKey=opName.replace(/[^a-zA-Z0-9]/g,'_');
@@ -541,7 +1259,6 @@ async function loadAll(){
       content.appendChild(sec);
     });
 
-    // Re-open panels that were open
     for(const[key,info] of Object.entries(openPanels)){
       if(info.type==='trend')showTrend(info.opKey,info.opName);
       else if(info.type==='oee')showOee(info.opKey,info.opName);
@@ -549,7 +1266,13 @@ async function loadAll(){
 
     updateBanner(machines);
 
-    // Check PLC connection status
+    // Refresh active tab data too
+    if(currentTab==='tools')loadTools();
+    if(currentTab==='trades')loadTradesHistory();
+    // Always refresh flow strip on production tab
+    if(currentTab==='production')loadFlowStrip();
+
+    // PLC status
     try{
       const plcRes=await fetch(API+'/api/plc_status');
       const plcs=await plcRes.json();
@@ -567,15 +1290,229 @@ async function loadAll(){
   }
 }
 
+
+// ===== PROCESS FLOW STRIP =====
+async function loadFlowStrip() {
+  try {
+    const [flowRes, bufRes] = await Promise.all([
+      fetch(API + '/api/process_flow'),
+      fetch(API + '/api/buffer_state')
+    ]);
+    const flow = await flowRes.json();
+    const buffers = await bufRes.json();
+    renderFlowStrip(flow, buffers);
+  } catch(e) {
+    // Silently fail - flow strip is optional
+  }
+}
+
+function renderFlowStrip(flow, buffers) {
+  const strip = document.getElementById('flow-strip');
+  const inner = document.getElementById('flow-strip-inner');
+  if (!strip || !inner || !flow.nodes || !flow.nodes.length) return;
+
+  const bufMap = {};
+  (buffers||[]).forEach(b => bufMap[b.buffer_id] = b);
+  const nodeMap = {};
+  flow.nodes.forEach(n => nodeMap[n.id] = n);
+  const conns = flow.connections || [];
+
+  // BFS layering
+  const ch = {}; const pa = {};
+  conns.forEach(c => {
+    if (!ch[c.from]) ch[c.from] = [];
+    ch[c.from].push(c.to);
+    if (!pa[c.to]) pa[c.to] = [];
+    pa[c.to].push(c.from);
+  });
+  const roots = flow.nodes.filter(n => !pa[n.id]);
+  const layerOf = {}; const queue = [];
+  roots.forEach(n => { layerOf[n.id] = 0; queue.push(n.id); });
+  while (queue.length) {
+    const nid = queue.shift();
+    (ch[nid] || []).forEach(c => {
+      const nl = layerOf[nid] + 1;
+      if (layerOf[c] === undefined || layerOf[c] < nl) { layerOf[c] = nl; queue.push(c); }
+    });
+  }
+  const byLayer = {};
+  Object.keys(layerOf).forEach(nid => {
+    const l = layerOf[nid];
+    if (!byLayer[l]) byLayer[l] = [];
+    byLayer[l].push(nid);
+  });
+  const layerKeys = Object.keys(byLayer).map(Number).sort((a, b) => a - b);
+
+  let html = '';
+  layerKeys.forEach((lk, li) => {
+    if (li > 0) html += '<div style="font-size:14px;color:#0033A0;align-self:center;margin:0 3px">→</div>';
+    const nids = byLayer[lk];
+    if (nids.length === 1) {
+      html += renderStripNode(nodeMap[nids[0]], bufMap);
+    } else {
+      html += '<div style="display:inline-flex;flex-direction:column;gap:3px;align-items:center;margin:0 2px">';
+      nids.forEach(nid => { html += renderStripNode(nodeMap[nid], bufMap); });
+      html += '</div>';
+    }
+  });
+
+  inner.innerHTML = html;
+  strip.style.display = 'block';
+}
+
+function renderStripNode(node, bufMap) {
+  if (!node) return '';
+  if (node.type === 'buffer') {
+    const buf = bufMap[node.id];
+    const count = buf ? buf.current_count : '?';
+    const added = buf ? buf.parts_added : 0;
+    const consumed = buf ? buf.parts_consumed : 0;
+    return '<div style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin:0 2px">' +
+      '<div style="background:#fef9c3;border:1.5px solid #d97706;border-radius:4px;padding:4px 10px;min-width:80px;text-align:center">' +
+      '<div style="font-size:9px;font-weight:800;color:#7c5700;text-transform:uppercase">' + esc(node.label) + '</div>' +
+      '<div style="font-size:16px;font-weight:800;font-family:monospace;color:#7c5700">' + fmt(count) + '</div>' +
+      '<div style="font-size:9px;color:#999">+' + fmt(added) + ' -' + fmt(consumed) + '</div>' +
+      '</div>' +
+      '<div style="font-size:9px;color:#bbb;max-width:80px;text-align:center;white-space:normal;line-height:1.2">' + esc(node.note || '') + '</div></div>';
+  } else if (node.type === 'operation') {
+    const live = node.live || [];
+    const running = live.filter(m => m.ptpmc_category === 'running' || m.ptpmc_category === 'dressing').length;
+    const total = live.length;
+    const sClr = running === total ? '#16a34a' : running === 0 ? '#D32F2F' : '#d97706';
+    return '<div style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin:0 2px">' +
+      '<div style="background:#dbeafe;border:1.5px solid #0033A0;border-radius:4px;padding:4px 10px;min-width:90px;text-align:center">' +
+      '<div style="font-size:9px;font-weight:800;color:#0033A0;text-transform:uppercase;white-space:nowrap">' + esc(node.label.replace('\n', ' ')) + '</div>' +
+      '<div style="font-size:16px;font-weight:800;font-family:monospace;color:#1a1a1a">' + fmt(node.total_good || 0) + '</div>' +
+      '<div style="font-size:9px;font-weight:700;color:' + sClr + '">' + running + '/' + total + ' running</div>' +
+      '</div></div>';
+  } else if (node.type === 'output') {
+    return '<div style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin:0 2px">' +
+      '<div style="background:#dcfce7;border:1.5px solid #16a34a;border-radius:4px;padding:4px 10px;min-width:70px;text-align:center">' +
+      '<div style="font-size:9px;font-weight:800;color:#14532d;text-transform:uppercase">' + esc(node.label.replace('\n', ' ')) + '</div>' +
+      '</div></div>';
+  }
+  return '';
+}
+
+
+async function updateBuffer(bufferId, currentCount) {
+  const newCount = prompt(`Update buffer count for ${bufferId}\nCurrent: ${currentCount}\nEnter new count:`, currentCount);
+  if (newCount === null || newCount === '') return;
+  const count = parseInt(newCount);
+  if (isNaN(count) || count < 0) { alert('Please enter a valid number'); return; }
+  try {
+    await fetch(API + '/api/buffer_update', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({buffer_id: bufferId, count: count})
+    });
+    loadFlowStrip();
+  } catch(e) {
+    alert('Could not update buffer: ' + e.message);
+  }
+}
 function toggleSidebar(){
   sidebarOpen=!sidebarOpen;
   document.getElementById('sidebar').classList.toggle('open',sidebarOpen);
   document.getElementById('mainContent').classList.toggle('shifted',sidebarOpen);
 }
 
+// Trade Calls History Tab
+let tradesData=[];
+async function loadTradesHistory(){
+  try{
+    const r=await fetch(API+'/api/trades_history?shift='+currentShift);
+    tradesData=await r.json();
+    renderTradesHistory();
+  }catch(e){
+    document.getElementById('trades-content').innerHTML='<div style="padding:40px;text-align:center;color:var(--red);font-weight:600">Could not load trade call history</div>';
+  }
+}
+
+function renderTradesHistory(){
+  const cfg=CONFIG_CACHE||{};
+  const sc=cfg.support_codes||{};
+
+  // Summary counts
+  const active=tradesData.filter(t=>t.status==='Active');
+  const closed=tradesData.filter(t=>t.status==='Closed');
+  const avgDur=closed.length>0?Math.round(closed.reduce((s,t)=>s+(t.duration_min||0),0)/closed.length):0;
+
+  // Group by support type for summary
+  const byType={};
+  tradesData.forEach(t=>{
+    const k=t.support_short||'Unknown';
+    if(!byType[k])byType[k]={count:0,total_min:0};
+    byType[k].count++;
+    byType[k].total_min+=t.duration_min||0;
+  });
+
+  let html=`
+    <!-- Summary bar -->
+    <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="background:white;border:1px solid var(--lgray);border-radius:3px;padding:12px 20px;display:flex;flex-direction:column;align-items:center;min-width:100px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+        <span style="font-size:28px;font-weight:800;font-family:monospace;color:${active.length>0?'#e65100':'#4E802D'}">${active.length}</span>
+        <span style="font-size:11px;font-weight:800;color:var(--dgray);text-transform:uppercase;margin-top:3px">Active Now</span>
+      </div>
+      <div style="background:white;border:1px solid var(--lgray);border-radius:3px;padding:12px 20px;display:flex;flex-direction:column;align-items:center;min-width:100px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+        <span style="font-size:28px;font-weight:800;font-family:monospace;color:var(--gm-blue)">${tradesData.length}</span>
+        <span style="font-size:11px;font-weight:800;color:var(--dgray);text-transform:uppercase;margin-top:3px">Total This Shift</span>
+      </div>
+      <div style="background:white;border:1px solid var(--lgray);border-radius:3px;padding:12px 20px;display:flex;flex-direction:column;align-items:center;min-width:100px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+        <span style="font-size:28px;font-weight:800;font-family:monospace;color:var(--dgray)">${avgDur}</span>
+        <span style="font-size:11px;font-weight:800;color:var(--dgray);text-transform:uppercase;margin-top:3px">Avg Duration (min)</span>
+      </div>
+      ${Object.entries(byType).map(([type,data])=>`
+      <div style="background:white;border:1px solid var(--lgray);border-radius:3px;padding:10px 16px;display:flex;flex-direction:column;justify-content:center;min-width:120px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+        <span style="font-size:13px;font-weight:800;color:var(--black)">${fmt(data.count)} calls</span>
+        <span style="font-size:12px;font-weight:700;color:var(--gm-blue);margin-top:2px">${type}</span>
+        <span style="font-size:11px;color:var(--dgray);margin-top:2px">${Math.round(data.total_min)} min total</span>
+      </div>`).join('')}
+    </div>
+
+    <!-- Table -->
+    <div style="background:white;border:1px solid var(--lgray);border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow-x:auto">
+      <table class="trades-table">
+        <thead><tr>
+          <th>Status</th>
+          <th>Machine</th>
+          <th>Trade / Support</th>
+          <th>Called At</th>
+          <th>Closed At</th>
+          <th>Duration</th>
+        </tr></thead>
+        <tbody>`;
+
+  if(!tradesData.length){
+    html+=`<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--dgray);font-weight:600">No trade calls this shift</td></tr>`;
+  }else{
+    tradesData.forEach(t=>{
+      const isActive=t.status==='Active';
+      const dur=t.duration_min||0;
+      const durStr=dur<60?Math.round(dur)+' min':(dur/60).toFixed(1)+' hrs';
+      const durLong=dur>45;
+      html+=`<tr>
+        <td><span class="${isActive?'trade-status-active':'trade-status-closed'}">${t.status}</span></td>
+        <td style="font-weight:700">${t.machine_name||t.machine_id}</td>
+        <td>
+          <span style="font-weight:700">${t.support_short||'Code '+t.support_code}</span><br>
+          <span style="font-size:11px;color:var(--dgray)">${(sc[String(t.support_code)]||{}).full||''}</span>
+        </td>
+        <td style="font-family:monospace;font-size:12px">${(t.called_at||'').slice(11,16)}</td>
+        <td style="font-family:monospace;font-size:12px">${t.closed_at?(t.closed_at||'').slice(11,16):'—'}</td>
+        <td><span class="trade-dur${durLong?' long':''}">${durStr}</span></td>
+      </tr>`;
+    });
+  }
+  html+=`</tbody></table></div>`;
+  document.getElementById('trades-content').innerHTML=html;
+}
+
 document.getElementById('manualDate').value=new Date().toISOString().slice(0,10);
 loadAll();
+loadFlowStrip();
 setInterval(loadAll,15000);
+setInterval(()=>{if(currentTab==='production')loadFlowStrip();if(currentTab==='flow')loadProcessFlow();},30000);
 setInterval(()=>{updateBanner(lastMachines);},60000);
 </script>
 </body>

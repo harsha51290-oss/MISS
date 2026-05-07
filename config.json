@@ -1,0 +1,1154 @@
+{
+  "area": {
+    "code": "102",
+    "name": "Body Hard End",
+    "dept": "909 / DEAC",
+    "plant": "Grand Rapids Operation",
+    "api_port": 8001,
+    "miss_pc": "GRO-909MISS-PC01"
+  },
+  "local": {
+    "scan_intervals": {
+      "tier1_sec": 1,
+      "tier2_sec": 15
+    },
+    "down_timers": {
+      "down_confirm_sec": 20,
+      "recover_confirm_sec": 60
+    },
+    "tool_change_threshold": 50,
+    "consecutive_good_target": 10
+  },
+  "shifts": {
+    "C": {
+      "start": "22:00",
+      "end": "06:00"
+    },
+    "A": {
+      "start": "06:00",
+      "end": "14:00"
+    },
+    "B": {
+      "start": "14:00",
+      "end": "22:00"
+    }
+  },
+  "breaks": [
+    {
+      "start": "08:30",
+      "end": "08:45"
+    },
+    {
+      "start": "10:30",
+      "end": "10:50"
+    },
+    {
+      "start": "12:30",
+      "end": "12:45"
+    },
+    {
+      "start": "06:00",
+      "end": "06:05"
+    },
+    {
+      "start": "",
+      "end": ""
+    }
+  ],
+  "support_codes": {
+    "0": {
+      "short": "--",
+      "full": "No Call"
+    },
+    "1": {
+      "short": "Die Maker",
+      "full": "Calling Die Maker Support"
+    },
+    "2": {
+      "short": "Electrical",
+      "full": "Calling Electrical Support"
+    },
+    "3": {
+      "short": "Mechanical",
+      "full": "Calling Mechanical Support"
+    },
+    "4": {
+      "short": "MC-Mach Repair",
+      "full": "Calling Mechanical - Machine Repair Support"
+    },
+    "5": {
+      "short": "MC-Millwright",
+      "full": "Calling Mechanical - Millwright Support"
+    },
+    "6": {
+      "short": "MC-Pipe Fitter",
+      "full": "Calling Mechanical - Pipe Fitter Support"
+    },
+    "7": {
+      "short": "MC-Tool Maker",
+      "full": "Calling Mechanical - Tool Maker Support"
+    },
+    "8": {
+      "short": "Multi-Skilled",
+      "full": "Calling Multi-Skilled Support"
+    },
+    "9": {
+      "short": "Operator",
+      "full": "Calling Operator Production Support"
+    },
+    "10": {
+      "short": "Specialist",
+      "full": "Calling Specialist Support"
+    },
+    "11": {
+      "short": "",
+      "full": ""
+    },
+    "12": {
+      "short": "",
+      "full": ""
+    },
+    "13": {
+      "short": "",
+      "full": ""
+    },
+    "14": {
+      "short": "",
+      "full": ""
+    },
+    "15": {
+      "short": "",
+      "full": ""
+    }
+  },
+  "machines": [
+    {
+      "id": "BH_ODG1",
+      "name": "OD Grind 1",
+      "op": "170",
+      "op_name": "Body Finish OD Grind",
+      "udt_tag": "MIS_ODGrind_1",
+      "rated_ct": 1.15,
+      "shift_target": 18226,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_ODG2",
+      "name": "OD Grind 2",
+      "op": "170",
+      "op_name": "Body Finish OD Grind",
+      "udt_tag": "MIS_ODGrind_2",
+      "rated_ct": 1.15,
+      "shift_target": 18226,
+      "series_output": true,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_CHC1",
+      "name": "CHC North",
+      "op": "180",
+      "op_name": "Body Crosshole Checker",
+      "udt_tag": "MIS_CHC_N",
+      "rated_ct": 1.7,
+      "shift_target": 9113,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_CHC2",
+      "name": "CHC South",
+      "op": "180",
+      "op_name": "Body Crosshole Checker",
+      "udt_tag": "MIS_CHC_S",
+      "rated_ct": 1.7,
+      "shift_target": 9113,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA1A",
+      "name": "UVA 1-A",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_1A",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA1B",
+      "name": "UVA 1-B",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_1B",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA2A",
+      "name": "UVA 2-A",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_2A",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA2B",
+      "name": "UVA 2-B",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_2B",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA3A",
+      "name": "UVA 3-A",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_3A",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_UVA3B",
+      "name": "UVA 3-B",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_UVA_3B",
+      "rated_ct": 19.9,
+      "shift_target": 941,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH1",
+      "name": "Bahmueller 1",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_1",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH2",
+      "name": "Bahmueller 2",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_2",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH3",
+      "name": "Bahmueller 3",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_3",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH4",
+      "name": "Bahmueller 4",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_4",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH5",
+      "name": "Bahmueller 5",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_5",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH6",
+      "name": "Bahmueller 6",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_6",
+      "rated_ct": 10.8,
+      "shift_target": 1735,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    },
+    {
+      "id": "BH_BAH7",
+      "name": "Bahmueller 7",
+      "op": "190",
+      "op_name": "Body ID Grind Area",
+      "udt_tag": "MIS_BodyBM_7",
+      "rated_ct": 10.9,
+      "shift_target": 1738,
+      "series_output": false,
+      "ip": "120.165.238.57",
+      "slot": 0,
+      "program_prefix": "Program:Illuminate"
+    }
+  ],
+  "admin": {
+    "username": "admin",
+    "password": "Iamcontrols@2100"
+  },
+  "tools": {
+    "BH_ODG1": {
+      "T0": {
+        "description": "Grinding Wheel",
+        "limit": 5000000,
+        "warning": 450000
+      },
+      "T1": {
+        "description": "Dressing Wheel",
+        "limit": 5000000,
+        "warning": 450000
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_ODG2": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_CHC1": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_CHC2": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_UVA1A": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_UVA1B": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_UVA2A": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_UVA2B": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_UVA3A": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_UVA3B": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_BAH1": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_BAH2": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_BAH3": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_BAH4": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_BAH5": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_BAH6": {
+      "T0": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T1": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T2": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    },
+    "BH_BAH7": {
+      "T0": {
+        "description": "ID Tool",
+        "limit": 2500,
+        "warning": 2000
+      },
+      "T1": {
+        "description": "Bore Wheel",
+        "limit": 4800,
+        "warning": 4500
+      },
+      "T2": {
+        "description": "Dress Wheel",
+        "limit": 2500,
+        "warning": 2000
+      },
+      "T3": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T4": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T5": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      },
+      "T6": {
+        "description": "",
+        "limit": 0,
+        "warning": 0
+      }
+    }
+  },
+  "buffer_log_interval_sec": 300,
+  "process_flow": {
+    "nodes": [
+      {
+        "id": "BUFFER_A",
+        "type": "buffer",
+        "label": "Buffer A",
+        "note": "Before OD Grind \u2014 from Heat Treat",
+        "machines": [],
+        "x": 50,
+        "y": 220
+      },
+      {
+        "id": "OP170",
+        "type": "operation",
+        "label": "OP 170\nOD Grind",
+        "note": "OD Grind 2 is series output",
+        "machines": [
+          "BH_ODG1",
+          "BH_ODG2"
+        ],
+        "x": 260,
+        "y": 220
+      },
+      {
+        "id": "BUFFER_B",
+        "type": "buffer",
+        "label": "Buffer B",
+        "note": "Between OD Grind & CHC",
+        "machines": [],
+        "x": 460,
+        "y": 220
+      },
+      {
+        "id": "OP180_N",
+        "type": "operation",
+        "label": "OP 180\nCHC North",
+        "note": "Body Crosshole Checker North",
+        "machines": [
+          "BH_CHC1"
+        ],
+        "x": 660,
+        "y": 100
+      },
+      {
+        "id": "OP180_S",
+        "type": "operation",
+        "label": "OP 180\nCHC South",
+        "note": "Body Crosshole Checker South",
+        "machines": [
+          "BH_CHC2"
+        ],
+        "x": 660,
+        "y": 340
+      },
+      {
+        "id": "BUFFER_C",
+        "type": "buffer",
+        "label": "Buffer C",
+        "note": "CHC North \u2192 UVA + BAH4",
+        "machines": [],
+        "x": 880,
+        "y": 100
+      },
+      {
+        "id": "BUFFER_D",
+        "type": "buffer",
+        "label": "Buffer D",
+        "note": "CHC South \u2192 BAH 1-3, 5-7",
+        "machines": [],
+        "x": 880,
+        "y": 340
+      },
+      {
+        "id": "OP190_UVA",
+        "type": "operation",
+        "label": "OP 190\nUVA + BAH4",
+        "note": "UVA 1A/1B/2A/2B/3A/3B + Bahmueller 4",
+        "machines": [
+          "BH_UVA1B",
+          "BH_UVA2A",
+          "BH_UVA2B",
+          "BH_UVA3A",
+          "BH_UVA3B",
+          "BH_UVA1A",
+          "BH_BAH4"
+        ],
+        "x": 1080,
+        "y": 100
+      },
+      {
+        "id": "OP190_BAH",
+        "type": "operation",
+        "label": "OP 190\nBahmueller",
+        "note": "Bahmueller 1/2/3/5/6/7",
+        "machines": [
+          "BH_BAH1",
+          "BH_BAH2",
+          "BH_BAH3",
+          "BH_BAH5",
+          "BH_BAH6",
+          "BH_BAH7"
+        ],
+        "x": 1080,
+        "y": 340
+      },
+      {
+        "id": "BUFFER_E",
+        "type": "buffer",
+        "label": "Buffer E",
+        "note": "ID Grind \u2192 Assembly OP 42",
+        "machines": [],
+        "x": 1300,
+        "y": 220
+      },
+      {
+        "id": "OUTPUT_1777838771882",
+        "type": "output",
+        "label": "OP42 Cell 1/2/3",
+        "note": "",
+        "machines": [],
+        "x": 1510,
+        "y": 220
+      }
+    ],
+    "connections": [
+      {
+        "from": "BUFFER_A",
+        "to": "OP170"
+      },
+      {
+        "from": "OP170",
+        "to": "BUFFER_B"
+      },
+      {
+        "from": "BUFFER_B",
+        "to": "OP180_N"
+      },
+      {
+        "from": "BUFFER_B",
+        "to": "OP180_S"
+      },
+      {
+        "from": "OP180_N",
+        "to": "BUFFER_C"
+      },
+      {
+        "from": "OP180_S",
+        "to": "BUFFER_D"
+      },
+      {
+        "from": "BUFFER_C",
+        "to": "OP190_UVA"
+      },
+      {
+        "from": "BUFFER_D",
+        "to": "OP190_BAH"
+      },
+      {
+        "from": "OP190_UVA",
+        "to": "BUFFER_E"
+      },
+      {
+        "from": "OP190_BAH",
+        "to": "BUFFER_E"
+      },
+      {
+        "from": "BUFFER_E",
+        "to": "OUTPUT_1777838771882"
+      }
+    ]
+  }
+}

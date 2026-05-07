@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MISS Configuration</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gm-blue:#0033A0;--gm-dark:#122C6C;--gm-light:#D6E5FB;--gm-lightest:#F0F5FF;
+  --black:#222;--dgray:#555;--gray:#999;--lgray:#DDD;--xlgray:#F5F5F5;
+  --green:#39B54A;--lgreen:#E8F5E9;--red:#D32F2F;--lred:#FFEBEE;
+  --yellow:#F9A825;--lyellow:#FFF8E1;--orange:#F57F20;
+}
+body{font-family:Arial,sans-serif;font-size:14px;color:var(--black);background:var(--xlgray);min-height:100vh;display:flex;flex-direction:column}
+/* Header */
+.hdr{background:var(--gm-blue);color:white;display:flex;align-items:center;padding:0 20px;height:56px;position:sticky;top:0;z-index:200;box-shadow:0 2px 6px rgba(0,0,0,.25);gap:14px}
+.hdr-logo{background:white;color:var(--gm-blue);font-weight:900;font-size:14px;padding:3px 9px;border-radius:2px}
+.hdr-title{font-size:15px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px;letter-spacing:.06em}
+.hdr-links{margin-left:auto;display:flex;gap:10px}
+.hdr-link{color:rgba(255,255,255,.85);font-size:12px;font-weight:700;text-decoration:none;padding:5px 10px;border:1px solid rgba(255,255,255,.3);border-radius:2px}
+.hdr-link:hover{background:rgba(255,255,255,.15)}
+
+/* Flow editor moved to flow.html */
+/* Login */
+.login-wrap{flex:1;display:flex;align-items:center;justify-content:center}
+.login-box{background:white;border-radius:4px;padding:32px 36px;width:320px;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.login-title{font-size:16px;font-weight:800;color:var(--gm-blue);margin-bottom:20px;text-align:center;text-transform:uppercase;letter-spacing:.05em}
+.login-err{background:var(--lred);color:var(--red);font-size:12px;font-weight:700;padding:7px 10px;border-radius:2px;margin-bottom:12px;display:none}
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:11px;font-weight:800;color:var(--dgray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.fld input{width:100%;border:1.5px solid var(--lgray);border-radius:2px;padding:8px 10px;font-size:13px;font-family:Arial}
+.fld input:focus{outline:none;border-color:var(--gm-blue)}
+.btn-primary{background:var(--gm-blue);color:white;border:none;padding:9px 20px;border-radius:2px;font-size:13px;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
+.btn-primary:hover{background:var(--gm-dark)}
+.btn-primary:disabled{background:var(--gray);cursor:not-allowed}
+.btn-secondary{background:white;color:var(--gm-blue);border:1.5px solid var(--gm-blue);padding:7px 16px;border-radius:2px;font-size:12px;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:.04em}
+.btn-secondary:hover{background:var(--gm-lightest)}
+.btn-danger{background:white;color:var(--red);border:1.5px solid var(--red);padding:7px 14px;border-radius:2px;font-size:12px;font-weight:800;cursor:pointer}
+.btn-danger:hover{background:var(--lred)}
+.btn-sm{padding:4px 10px;font-size:11px;font-weight:700;border-radius:2px;cursor:pointer;border:1px solid var(--lgray);background:white;color:var(--dgray)}
+.btn-sm:hover{background:var(--xlgray)}
+.btn-icon{background:none;border:none;cursor:pointer;padding:3px 6px;font-size:14px;color:var(--dgray);border-radius:2px}
+.btn-icon:hover{background:var(--xlgray)}
+/* Main layout */
+.cfg-wrap{display:none;flex:1;flex-direction:column}
+.tab-bar{background:white;border-bottom:2px solid var(--lgray);display:flex;align-items:stretch;position:sticky;top:56px;z-index:199;overflow-x:auto}
+.tab-btn{padding:11px 18px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;border:none;background:none;color:var(--dgray);border-bottom:3px solid transparent;white-space:nowrap}
+.tab-btn:hover{color:var(--gm-blue);background:var(--gm-lightest)}
+.tab-btn.active{color:var(--gm-blue);border-bottom:3px solid var(--gm-blue)}
+.tab-content{display:none;padding:16px 20px;flex:1;max-width:100%;overflow-x:auto}
+.tab-content.active{display:block}
+/* Save bar */
+.save-bar{background:white;border-top:2px solid var(--lgray);padding:10px 20px;display:flex;align-items:center;gap:10px;position:sticky;bottom:0;z-index:190;flex-wrap:wrap}
+.save-msg{font-size:13px;font-weight:700}
+.save-msg.ok{color:var(--green)}
+.save-msg.err{color:var(--red)}
+/* Cards */
+.card{background:white;border-radius:3px;border:1px solid var(--lgray);margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card-hdr{background:var(--gm-blue);color:white;padding:9px 14px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-radius:2px 2px 0 0;display:flex;align-items:center;justify-content:space-between}
+.card-body{padding:12px 14px}
+/* Toolbar */
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.toolbar-sep{width:1px;height:24px;background:var(--lgray);margin:0 4px}
+/* Tables */
+.cfg-table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
+.cfg-table th{background:#f0f4ff;color:var(--gm-dark);padding:7px 8px;text-align:left;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--gm-light);white-space:nowrap}
+.cfg-table td{padding:5px 8px;border-bottom:1px solid var(--xlgray);vertical-align:middle}
+.cfg-table tr:hover td{background:var(--gm-lightest)}
+.cfg-table input[type=text],.cfg-table input[type=number]{border:1.5px solid var(--lgray);border-radius:2px;padding:4px 6px;font-size:12px;width:100%;min-width:50px}
+.cfg-table input:focus{outline:none;border-color:var(--gm-blue);background:white}
+.cfg-table input[readonly]{background:var(--xlgray);color:var(--dgray);cursor:not-allowed;border-color:var(--lgray)}
+.mid-cell{font-family:monospace;font-size:11px;background:var(--xlgray);padding:4px 6px;border-radius:2px;color:var(--gm-dark);font-weight:700;white-space:nowrap}
+/* Tool slots */
+.tool-card{background:white;border:1px solid var(--lgray);border-radius:3px;margin-bottom:10px}
+.tool-card-hdr{background:#f0f4ff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--lgray)}
+.tool-card-name{font-size:13px;font-weight:800;color:var(--gm-dark)}
+.tool-card-op{font-size:11px;color:var(--dgray);font-weight:600}
+.tool-slots-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;padding:10px 12px}
+.tool-slot{background:var(--xlgray);border:1px solid var(--lgray);border-radius:3px;padding:8px}
+.tool-slot-lbl{font-size:10px;font-weight:800;color:var(--gm-blue);text-transform:uppercase;text-align:center;margin-bottom:6px}
+.tool-slot-field{font-size:9px;color:var(--dgray);font-weight:700;text-transform:uppercase;margin:4px 0 2px}
+.tool-slot input{width:100%;border:1px solid var(--lgray);border-radius:2px;padding:3px 5px;font-size:11px}
+.tool-slot input:focus{outline:none;border-color:var(--gm-blue)}
+/* Shifts */
+.shift-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.shift-item{background:var(--xlgray);border:1px solid var(--lgray);border-radius:3px;padding:10px 12px}
+.shift-lbl{font-size:13px;font-weight:800;color:var(--gm-blue);margin-bottom:8px;text-transform:uppercase}
+.shift-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.shift-row label{font-size:11px;font-weight:700;color:var(--dgray);text-transform:uppercase;min-width:38px}
+.shift-row input{border:1px solid var(--lgray);border-radius:2px;padding:4px 7px;font-size:12px;font-family:monospace;width:90px}
+/* Breaks */
+.break-row{display:grid;grid-template-columns:40px 1fr 1fr 40px;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--xlgray)}
+.break-row:last-child{border-bottom:none}
+.break-num{font-size:11px;font-weight:800;color:var(--gm-blue);text-align:center}
+.break-row input{border:1px solid var(--lgray);border-radius:2px;padding:5px 8px;font-size:12px;font-family:monospace;width:100%}
+/* Support codes */
+.sup-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.sup-item{background:var(--xlgray);border:1px solid var(--lgray);border-radius:3px;padding:8px 10px}
+.sup-code-lbl{font-size:11px;font-weight:800;color:var(--gm-blue);margin-bottom:5px}
+.sup-item input{width:100%;border:1px solid var(--lgray);border-radius:2px;padding:4px 7px;font-size:12px;margin-bottom:3px}
+/* KV items */
+.kv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.kv-item{background:var(--xlgray);border:1px solid var(--lgray);border-radius:3px;padding:10px 12px}
+.kv-lbl{font-size:11px;font-weight:800;color:var(--dgray);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.kv-item input{width:100%;border:1px solid var(--lgray);border-radius:2px;padding:5px 8px;font-size:13px;font-family:monospace}
+.kv-item input:focus{outline:none;border-color:var(--gm-blue)}
+.kv-hint{font-size:10px;color:var(--gray);margin-top:3px}
+/* Audit log */
+.audit-table{width:100%;border-collapse:collapse;font-size:12px}
+.audit-table th{background:#f0f4ff;color:var(--gm-dark);padding:7px 10px;text-align:left;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--gm-light)}
+.audit-table td{padding:7px 10px;border-bottom:1px solid var(--xlgray);vertical-align:top;word-wrap:break-word;overflow-wrap:break-word}
+.audit-table tr:hover td{background:var(--gm-lightest)}
+.change-list{margin:0;padding-left:14px;font-size:11px;color:var(--dgray)}
+.change-list li{margin-bottom:2px}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase}
+.badge-tab{background:var(--gm-lightest);color:var(--gm-blue);border:1px solid var(--gm-light)}
+.badge-restore{background:var(--lyellow);color:#7a4f00;border:1px solid var(--yellow)}
+/* Save dialog overlay */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.dialog{background:white;border-radius:4px;padding:24px 28px;width:420px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.dialog-title{font-size:15px;font-weight:800;color:var(--gm-blue);margin-bottom:16px;text-transform:uppercase;letter-spacing:.04em}
+.dialog label{display:block;font-size:11px;font-weight:800;color:var(--dgray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;margin-top:12px}
+.dialog input,.dialog textarea{width:100%;border:1.5px solid var(--lgray);border-radius:2px;padding:7px 9px;font-size:13px;font-family:Arial}
+.dialog textarea{height:70px;resize:vertical}
+.dialog input:focus,.dialog textarea:focus{outline:none;border-color:var(--gm-blue)}
+.dialog-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-logo">GM</div>
+  <div>
+    <div class="hdr-title">MISS Configuration</div>
+    <div class="hdr-sub" id="hdrSub">Manufacturing Intelligence System</div>
+  </div>
+  <div class="hdr-links">
+    <a href="/dashboard" class="hdr-link">Dashboard</a>
+    <a href="/flow" class="hdr-link" style="background:rgba(255,255,255,.15)">Process Flow &#8599;</a>
+    <a href="/api/health" class="hdr-link">Health</a>
+  </div>
+</header>
+
+<!-- Login -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="login-title">Config Login</div>
+    <div class="login-err" id="loginErr">Invalid username or password</div>
+    <div class="fld"><label>Username</label><input type="text" id="loginUser" placeholder="admin"></div>
+    <div class="fld"><label>Password</label><input type="password" id="loginPass" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-primary" style="width:100%" onclick="doLogin()">Login</button>
+  </div>
+</div>
+
+<!-- Config UI -->
+<div class="cfg-wrap" id="cfgWrap">
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="showTab('machines',this)">1. Machines</button>
+    <button class="tab-btn" onclick="showTab('tools',this)">2. Tool Config</button>
+    <button class="tab-btn" onclick="showTab('shifts',this)">3. Shifts &amp; Breaks</button>
+    <button class="tab-btn" onclick="showTab('support',this)">4. Support Codes</button>
+    <button class="tab-btn" onclick="showTab('plc',this)">5. PLC Config</button>
+    <button class="tab-btn" onclick="showTab('timers',this)">6. Down Timers</button>
+    <button class="tab-btn" onclick="showTab('audit',this)">7. Backup Log</button>
+  </div>
+
+  <!-- Tab 1: Machines -->
+  <div class="tab-content active" id="tab-machines">
+    <div class="toolbar">
+      <button class="btn-primary" onclick="addMachine()">+ Add Machine</button>
+      <div class="toolbar-sep"></div>
+      <button class="btn-secondary" onclick="downloadMachinesExcel()">&#8595; Download Excel</button>
+      <button class="btn-secondary" onclick="triggerUpload('machines-upload')">&#8593; Upload Excel</button>
+      <input type="file" id="machines-upload" accept=".xlsx,.xls" style="display:none" onchange="uploadMachinesExcel(this)">
+      <span style="font-size:11px;color:var(--dgray);margin-left:4px">Note: Excel upload never overwrites Machine ID</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="cfg-table" id="machineTable">
+        <thead><tr>
+          <th style="width:36px">#</th>
+          <th style="width:120px">Machine ID</th>
+          <th>Name</th>
+          <th style="width:60px">Op</th>
+          <th>Op Name</th>
+          <th style="width:90px">Rated CT (s)</th>
+          <th style="width:100px">Shift Target</th>
+          <th style="width:130px">IP Address</th>
+          <th style="width:50px">Slot</th>
+          <th>UDT Tag</th>
+          <th style="width:70px">Series</th>
+          <th style="width:80px">Order</th>
+          <th style="width:50px">Del</th>
+        </tr></thead>
+        <tbody id="machineRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Tab 2: Tool Config -->
+  <div class="tab-content" id="tab-tools">
+    <div class="toolbar">
+      <button class="btn-secondary" onclick="downloadToolsExcel()">&#8595; Download Excel</button>
+      <button class="btn-secondary" onclick="triggerUpload('tools-upload')">&#8593; Upload Excel</button>
+      <input type="file" id="tools-upload" accept=".xlsx,.xls" style="display:none" onchange="uploadToolsExcel(this)">
+      <span style="font-size:11px;color:var(--dgray);margin-left:4px">T0–T6 per machine · Leave blank/0 for unused slots</span>
+    </div>
+    <div id="toolConfigRows"></div>
+  </div>
+
+  <!-- Tab 3: Shifts & Breaks -->
+  <div class="tab-content" id="tab-shifts">
+    <div class="card">
+      <div class="card-hdr">Shift Times — Order: C (Night) → A (Morning) → B (Afternoon)</div>
+      <div class="card-body">
+        <div class="shift-grid" id="shiftGrid"></div>
+        <div style="font-size:11px;color:var(--dgray);margin-top:4px;font-weight:600">
+          Daily part count starts with C shift. Use HH:MM format (24-hour).
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr" style="justify-content:space-between">
+        <span>Break Times — Start &amp; End (HH:MM) — Same for all shifts — Max 5 breaks</span>
+        <button class="btn-sm" style="background:white;color:var(--gm-blue);border-color:var(--gm-blue)" onclick="addBreak()">+ Add Break</button>
+      </div>
+      <div class="card-body" id="breaksBody">
+        <div style="display:grid;grid-template-columns:40px 1fr 1fr 40px;gap:8px;padding:4px 10px 8px;font-size:10px;font-weight:800;color:var(--dgray);text-transform:uppercase">
+          <span>#</span><span>Start Time</span><span>End Time</span><span></span>
+        </div>
+        <div id="breaksRows"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: Support Codes -->
+  <div class="tab-content" id="tab-support">
+    <div class="card">
+      <div class="card-hdr">Support / Trade Call Codes (0–15)</div>
+      <div class="card-body">
+        <div class="sup-grid" id="supportGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 5: PLC Config -->
+  <div class="tab-content" id="tab-plc">
+    <div class="card">
+      <div class="card-hdr">Area Info</div>
+      <div class="card-body"><div class="kv-grid" id="areaGrid"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">Scan Intervals</div>
+      <div class="card-body"><div class="kv-grid" id="scanGrid"></div></div>
+    </div>
+  </div>
+
+  <!-- Tab 6: Down Timers -->
+  <div class="tab-content" id="tab-timers">
+    <div class="card">
+      <div class="card-hdr">Down Timer Settings</div>
+      <div class="card-body"><div class="kv-grid" id="timerGrid"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">Consecutive Good Parts</div>
+      <div class="card-body"><div class="kv-grid" id="consecGrid"></div></div>
+    </div>
+  </div>
+
+  <!-- Tab 8: Backup Log -->
+  <div class="tab-content" id="tab-audit">
+    <div class="toolbar">
+      <button class="btn-secondary" onclick="loadAuditLog()">&#8635; Refresh</button>
+      <span style="font-size:11px;color:var(--dgray);margin-left:4px">Full history of all config changes. Click Restore to roll back to any version.</span>
+    </div>
+    <div class="card">
+      <div class="card-hdr">Config Change History</div>
+      <div class="card-body" style="padding:0;overflow-x:auto">
+        <table class="audit-table" id="auditTable" style="table-layout:fixed;width:100%">
+          <thead><tr>
+            <th style="width:140px">Date / Time</th>
+            <th style="width:130px">Changed By</th>
+            <th style="width:80px">Tab</th>
+            <th style="width:auto">What Changed</th>
+            <th style="width:180px">Comment</th>
+            <th style="width:80px">Action</th>
+          </tr></thead>
+          <tbody id="auditRows">
+            <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--dgray)">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Save bar -->
+  <div class="save-bar" id="saveBar">
+    <button class="btn-primary" onclick="promptSave()">Save All Changes</button>
+    <span class="save-msg" id="saveMsg"></span>
+    <span style="margin-left:auto;font-size:11px;color:var(--gray);font-weight:600">All changes save to config.json · Auto-backed up on every save</span>
+  </div>
+</div>
+
+<!-- Save Dialog -->
+<div class="overlay" id="saveOverlay">
+  <div class="dialog">
+    <div class="dialog-title">Save Configuration</div>
+    <div id="saveDialogChanges" style="font-size:12px;color:var(--dgray);margin-bottom:4px"></div>
+    <label>Your Name</label>
+    <input type="text" id="saveDialogUser" placeholder="Enter your name">
+    <label>Comment (optional)</label>
+    <textarea id="saveDialogComment" placeholder="What did you change and why?"></textarea>
+    <div class="dialog-btns">
+      <button class="btn-secondary" onclick="closeSaveDialog()">Cancel</button>
+      <button class="btn-primary" onclick="confirmSave()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Dialog -->
+<div class="overlay" id="restoreOverlay">
+  <div class="dialog">
+    <div class="dialog-title">Restore Configuration</div>
+    <div id="restoreInfo" style="font-size:13px;color:var(--dgray);margin-bottom:12px"></div>
+    <label>Your Name</label>
+    <input type="text" id="restoreUser" placeholder="Enter your name">
+    <div class="dialog-btns">
+      <button class="btn-secondary" onclick="document.getElementById('restoreOverlay').classList.remove('show')">Cancel</button>
+      <button class="btn-danger" onclick="confirmRestore()">Restore This Version</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let cfg = null;
+let sessionPassword = '';
+let currentTab = 'machines';
+let pendingRestoreFile = null;
+
+// ===== LOGIN =====
+async function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  try {
+    const r = await fetch(API + '/api/auth', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: u, password: p})
+    });
+    const data = await r.json();
+    if (data.ok) {
+      sessionPassword = p;
+      document.getElementById('loginWrap').style.display = 'none';
+      const cw = document.getElementById('cfgWrap');
+      cw.style.display = 'flex';
+      cw.style.flexDirection = 'column';
+      await loadConfig();
+      await loadAuditLog();
+    } else {
+      document.getElementById('loginErr').style.display = 'block';
+      document.getElementById('loginErr').textContent = 'Invalid username or password';
+    }
+  } catch(e) {
+    document.getElementById('loginErr').style.display = 'block';
+    document.getElementById('loginErr').textContent = 'Cannot connect to API';
+  }
+}
+
+// ===== TAB =====
+function showTab(name, btn) {
+  currentTab = name;
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const activeTab = document.getElementById('tab-' + name);
+  activeTab.classList.add('active');
+
+  if (btn) btn.classList.add('active');
+  // Flow tab has its own save button in toolbar, hide global save bar
+  // Audit tab also hides save bar
+  document.getElementById('saveBar').style.display = name === 'audit' ? 'none' : 'flex';
+  if (name === 'audit') loadAuditLog();
+}
+
+// ===== CONFIG LOAD =====
+async function loadConfig() {
+  const r = await fetch(API + '/api/config');
+  cfg = await r.json();
+  const a = cfg.area || {};
+  document.getElementById('hdrSub').textContent =
+    (a.plant || '') + (a.dept ? ' — Dept ' + a.dept : '') + ' — ' + (a.name || '');
+  document.title = 'Config — ' + (a.code || '') + ' ' + (a.name || '');
+  renderAll();
+}
+
+function renderAll() {
+  renderMachines();
+  renderTools();
+  renderShifts();
+  renderSupport();
+  renderPLC();
+  renderTimers();
+}
+
+// ===== TAB 1: MACHINES =====
+function renderMachines() {
+  const tbody = document.getElementById('machineRows');
+  tbody.innerHTML = '';
+  (cfg.machines || []).forEach((m, i) => {
+    const tr = document.createElement('tr');
+    tr.dataset.idx = i;
+    tr.innerHTML = `
+      <td style="text-align:center;color:var(--dgray);font-size:11px;font-weight:700">${i+1}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:4px">
+          <span class="mid-cell" id="mid-display-${i}">${esc(m.id||'')}</span>
+          <button class="btn-icon" title="Edit ID" onclick="editMachineId(${i})">&#9998;</button>
+        </div>
+        <input type="text" id="mid-input-${i}" value="${esc(m.id||'')}" style="display:none;font-family:monospace;font-size:11px"
+          onblur="saveMachineId(${i})" onkeydown="if(event.key==='Enter')saveMachineId(${i})">
+      </td>
+      <td><input type="text" value="${esc(m.name||'')}" oninput="cfg.machines[${i}].name=this.value"></td>
+      <td><input type="text" value="${esc(m.op||'')}" style="width:50px" oninput="cfg.machines[${i}].op=this.value"></td>
+      <td><input type="text" value="${esc(m.op_name||'')}" oninput="cfg.machines[${i}].op_name=this.value"></td>
+      <td><input type="number" value="${m.rated_ct||0}" step="0.1" oninput="cfg.machines[${i}].rated_ct=parseFloat(this.value)||0"></td>
+      <td><input type="number" value="${m.shift_target||0}" oninput="cfg.machines[${i}].shift_target=parseInt(this.value)||0"></td>
+      <td><input type="text" value="${esc(m.ip||'')}" style="font-family:monospace;font-size:11px" oninput="cfg.machines[${i}].ip=this.value"></td>
+      <td><input type="number" value="${m.slot||0}" style="width:44px" oninput="cfg.machines[${i}].slot=parseInt(this.value)||0"></td>
+      <td><input type="text" value="${esc(m.udt_tag||'')}" style="font-family:monospace;font-size:11px" oninput="cfg.machines[${i}].udt_tag=this.value"></td>
+      <td style="text-align:center"><input type="checkbox" ${m.series_output?'checked':''} onchange="cfg.machines[${i}].series_output=this.checked"></td>
+      <td style="text-align:center;white-space:nowrap">
+        <button class="btn-icon" title="Move Up" onclick="moveMachine(${i},-1)" ${i===0?'disabled':''}>&#9650;</button>
+        <button class="btn-icon" title="Move Down" onclick="moveMachine(${i},1)" ${i===(cfg.machines.length-1)?'disabled':''}>&#9660;</button>
+      </td>
+      <td style="text-align:center">
+        <button class="btn-icon" style="color:var(--red)" title="Delete" onclick="deleteMachine(${i})">&#10005;</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function editMachineId(i) {
+  document.getElementById('mid-display-' + i).style.display = 'none';
+  const input = document.getElementById('mid-input-' + i);
+  input.style.display = 'block';
+  input.focus();
+  input.select();
+}
+
+function saveMachineId(i) {
+  const input = document.getElementById('mid-input-' + i);
+  const newId = input.value.trim();
+  if (newId && newId !== cfg.machines[i].id) {
+    const oldId = cfg.machines[i].id;
+    cfg.machines[i].id = newId;
+    // Update tools key if exists
+    if (cfg.tools && cfg.tools[oldId]) {
+      cfg.tools[newId] = cfg.tools[oldId];
+      delete cfg.tools[oldId];
+    }
+  }
+  input.style.display = 'none';
+  document.getElementById('mid-display-' + i).textContent = cfg.machines[i].id;
+  document.getElementById('mid-display-' + i).style.display = '';
+}
+
+function moveMachine(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= cfg.machines.length) return;
+  [cfg.machines[i], cfg.machines[j]] = [cfg.machines[j], cfg.machines[i]];
+  renderMachines();
+}
+
+function deleteMachine(i) {
+  if (!confirm(`Delete machine "${cfg.machines[i].name}"? This cannot be undone.`)) return;
+  const id = cfg.machines[i].id;
+  cfg.machines.splice(i, 1);
+  if (cfg.tools && cfg.tools[id]) delete cfg.tools[id];
+  renderMachines();
+}
+
+function addMachine() {
+  const areaCode = (cfg.area || {}).code || 'XX';
+  const newId = areaCode + '_M' + (cfg.machines.length + 1);
+  cfg.machines.push({
+    id: newId, name: 'New Machine', op: '', op_name: '',
+    udt_tag: '', rated_ct: 0, shift_target: 0,
+    ip: '', slot: 0, series_output: false,
+    program_prefix: 'Program:Illuminate'
+  });
+  if (!cfg.tools) cfg.tools = {};
+  cfg.tools[newId] = {};
+  for (let s = 0; s < 7; s++) {
+    cfg.tools[newId][`T${s}`] = {description: '', limit: 0, warning: 0};
+  }
+  renderMachines();
+  // Scroll to bottom
+  const tbody = document.getElementById('machineRows');
+  tbody.lastElementChild?.scrollIntoView({behavior: 'smooth'});
+}
+
+// Machines Excel download
+function downloadMachinesExcel() {
+  const wb = XLSX.utils.book_new();
+  const rows = (cfg.machines || []).map(m => ({
+    'Machine ID': m.id,
+    'Name': m.name || '',
+    'Op': m.op || '',
+    'Op Name': m.op_name || '',
+    'Rated CT (sec)': m.rated_ct || 0,
+    'Shift Target': m.shift_target || 0,
+    'IP Address': m.ip || '',
+    'Slot': m.slot || 0,
+    'UDT Tag': m.udt_tag || '',
+    'Series Output': m.series_output ? 'Yes' : 'No',
+    'Program Prefix': m.program_prefix || 'Program:Illuminate',
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, 'Machines');
+  XLSX.writeFile(wb, `MISS_Machines_${(cfg.area||{}).code||'Area'}_${today()}.xlsx`);
+}
+
+function uploadMachinesExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, {type: 'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws);
+    rows.forEach(row => {
+      // Match by Machine ID — ID is NEVER overwritten from Excel
+      const mid = row['Machine ID'];
+      if (!mid) return;
+      const existing = cfg.machines.find(m => m.id === mid);
+      if (existing) {
+        // Update all fields EXCEPT id
+        if (row['Name'] !== undefined) existing.name = row['Name'];
+        if (row['Op'] !== undefined) existing.op = String(row['Op']);
+        if (row['Op Name'] !== undefined) existing.op_name = row['Op Name'];
+        if (row['Rated CT (sec)'] !== undefined) existing.rated_ct = parseFloat(row['Rated CT (sec)']) || 0;
+        if (row['Shift Target'] !== undefined) existing.shift_target = parseInt(row['Shift Target']) || 0;
+        if (row['IP Address'] !== undefined) existing.ip = row['IP Address'];
+        if (row['Slot'] !== undefined) existing.slot = parseInt(row['Slot']) || 0;
+        if (row['UDT Tag'] !== undefined) existing.udt_tag = row['UDT Tag'];
+        if (row['Series Output'] !== undefined) existing.series_output = row['Series Output'] === 'Yes';
+        if (row['Program Prefix'] !== undefined) existing.program_prefix = row['Program Prefix'];
+      }
+    });
+    renderMachines();
+    showMsg('Machines updated from Excel. Review changes then Save.', 'ok');
+  };
+  reader.readAsArrayBuffer(file);
+  input.value = '';
+}
+
+// ===== TAB 2: TOOLS =====
+function renderTools() {
+  const wrap = document.getElementById('toolConfigRows');
+  wrap.innerHTML = '';
+  if (!cfg.tools) cfg.tools = {};
+  (cfg.machines || []).forEach(m => {
+    if (!cfg.tools[m.id]) cfg.tools[m.id] = {};
+    for (let s = 0; s < 7; s++) {
+      const k = `T${s}`;
+      if (!cfg.tools[m.id][k]) cfg.tools[m.id][k] = {description: '', limit: 0, warning: 0};
+    }
+    const card = document.createElement('div');
+    card.className = 'tool-card';
+    const mid = m.id;
+    let slots = '';
+    for (let s = 0; s < 7; s++) {
+      const k = `T${s}`;
+      const t = cfg.tools[mid][k];
+      slots += `<div class="tool-slot">
+        <div class="tool-slot-lbl">T${s}</div>
+        <div class="tool-slot-field">Description</div>
+        <input type="text" value="${esc(t.description||'')}" placeholder="e.g. CBN Wheel"
+          oninput="cfg.tools['${mid}']['${k}'].description=this.value">
+        <div class="tool-slot-field">Limit (parts)</div>
+        <input type="number" value="${t.limit||0}" min="0"
+          oninput="cfg.tools['${mid}']['${k}'].limit=parseInt(this.value)||0">
+        <div class="tool-slot-field">Warning (remaining)</div>
+        <input type="number" value="${t.warning||0}" min="0"
+          oninput="cfg.tools['${mid}']['${k}'].warning=parseInt(this.value)||0">
+      </div>`;
+    }
+    card.innerHTML = `
+      <div class="tool-card-hdr">
+        <span class="tool-card-name">${esc(m.name)}</span>
+        <span class="tool-card-op">${esc(m.op_name||'')} — <span style="font-family:monospace">${esc(m.id)}</span></span>
+      </div>
+      <div class="tool-slots-grid">${slots}</div>`;
+    wrap.appendChild(card);
+  });
+}
+
+function downloadToolsExcel() {
+  const wb = XLSX.utils.book_new();
+  const rows = [];
+  (cfg.machines || []).forEach(m => {
+    const tools = (cfg.tools || {})[m.id] || {};
+    for (let s = 0; s < 7; s++) {
+      const k = `T${s}`;
+      const t = tools[k] || {description: '', limit: 0, warning: 0};
+      rows.push({
+        'Machine ID': m.id,
+        'Machine Name': m.name,
+        'Tool Slot': k,
+        'Description': t.description || '',
+        'Limit (parts)': t.limit || 0,
+        'Warning (remaining)': t.warning || 0,
+      });
+    }
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, 'Tool Config');
+  XLSX.writeFile(wb, `MISS_Tools_${(cfg.area||{}).code||'Area'}_${today()}.xlsx`);
+}
+
+function uploadToolsExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, {type: 'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws);
+    if (!cfg.tools) cfg.tools = {};
+    rows.forEach(row => {
+      const mid = row['Machine ID'];
+      const slot = row['Tool Slot'];
+      if (!mid || !slot) return;
+      if (!cfg.tools[mid]) cfg.tools[mid] = {};
+      cfg.tools[mid][slot] = {
+        description: row['Description'] || '',
+        limit: parseInt(row['Limit (parts)']) || 0,
+        warning: parseInt(row['Warning (remaining)']) || 0,
+      };
+    });
+    renderTools();
+    showMsg('Tool config updated from Excel. Review then Save.', 'ok');
+  };
+  reader.readAsArrayBuffer(file);
+  input.value = '';
+}
+
+// ===== TAB 3: SHIFTS & BREAKS =====
+function renderShifts() {
+  const sg = document.getElementById('shiftGrid');
+  sg.innerHTML = '';
+  if (!cfg.shifts) cfg.shifts = {C:{start:'22:00',end:'06:00'},A:{start:'06:00',end:'14:00'},B:{start:'14:00',end:'22:00'}};
+  // Always render in C -> A -> B order
+  ['C', 'A', 'B'].forEach(s => {
+    if (!cfg.shifts[s]) cfg.shifts[s] = {start: '', end: ''};
+    const labels = {C: 'C — Night', A: 'A — Morning', B: 'B — Afternoon'};
+    const d = document.createElement('div');
+    d.className = 'shift-item';
+    d.innerHTML = `
+      <div class="shift-lbl">${labels[s]}</div>
+      <div class="shift-row">
+        <label>Start</label>
+        <input type="text" value="${cfg.shifts[s].start||''}" placeholder="HH:MM"
+          oninput="cfg.shifts['${s}'].start=this.value">
+      </div>
+      <div class="shift-row">
+        <label>End</label>
+        <input type="text" value="${cfg.shifts[s].end||''}" placeholder="HH:MM"
+          oninput="cfg.shifts['${s}'].end=this.value">
+      </div>`;
+    sg.appendChild(d);
+  });
+  renderBreaks();
+}
+
+function renderBreaks() {
+  const container = document.getElementById('breaksRows');
+  container.innerHTML = '';
+  if (!cfg.breaks || !Array.isArray(cfg.breaks)) cfg.breaks = [];
+  cfg.breaks.forEach((b, i) => {
+    const row = document.createElement('div');
+    row.className = 'break-row';
+    row.innerHTML = `
+      <span class="break-num">${i+1}</span>
+      <input type="text" value="${b.start||''}" placeholder="08:30"
+        oninput="cfg.breaks[${i}].start=this.value">
+      <input type="text" value="${b.end||''}" placeholder="08:42"
+        oninput="cfg.breaks[${i}].end=this.value">
+      <button class="btn-icon" style="color:var(--red)" onclick="deleteBreak(${i})">&#10005;</button>`;
+    container.appendChild(row);
+  });
+}
+
+function addBreak() {
+  if (!Array.isArray(cfg.breaks)) cfg.breaks = [];
+  if (cfg.breaks.length >= 5) { alert('Maximum 5 breaks allowed.'); return; }
+  cfg.breaks.push({start: '', end: ''});
+  renderBreaks();
+}
+
+function deleteBreak(i) {
+  cfg.breaks.splice(i, 1);
+  renderBreaks();
+}
+
+// ===== TAB 4: SUPPORT CODES =====
+function renderSupport() {
+  const g = document.getElementById('supportGrid');
+  g.innerHTML = '';
+  if (!cfg.support_codes) cfg.support_codes = {};
+  for (let i = 0; i <= 15; i++) {
+    const k = String(i);
+    if (!cfg.support_codes[k]) cfg.support_codes[k] = {short: '', full: ''};
+    const d = document.createElement('div');
+    d.className = 'sup-item';
+    d.innerHTML = `
+      <div class="sup-code-lbl">Code ${i}</div>
+      <input type="text" value="${esc(cfg.support_codes[k].short||'')}" placeholder="Short label"
+        oninput="cfg.support_codes['${k}'].short=this.value">
+      <input type="text" value="${esc(cfg.support_codes[k].full||'')}" placeholder="Full description"
+        oninput="cfg.support_codes['${k}'].full=this.value">`;
+    g.appendChild(d);
+  }
+}
+
+// ===== TAB 5: PLC CONFIG =====
+function renderPLC() {
+  const ag = document.getElementById('areaGrid');
+  ag.innerHTML = '';
+  const a = cfg.area || {};
+  [
+    {k:'code', lbl:'Area Code'},
+    {k:'name', lbl:'Area Name'},
+    {k:'dept', lbl:'Department'},
+    {k:'plant', lbl:'Plant'},
+    {k:'api_port', lbl:'API Port', type:'number'},
+    {k:'miss_pc', lbl:'MISS PC Hostname'},
+  ].forEach(f => {
+    const d = document.createElement('div');
+    d.className = 'kv-item';
+    d.innerHTML = `
+      <div class="kv-lbl">${f.lbl}</div>
+      <input type="${f.type||'text'}" value="${esc(String(a[f.k]||''))}"
+        oninput="cfg.area['${f.k}']=${f.type==='number'?'parseInt(this.value)||0':'this.value'}">`;
+    ag.appendChild(d);
+  });
+
+  const local = cfg.local || {};
+  if (!local.scan_intervals) local.scan_intervals = {};
+  const sg = document.getElementById('scanGrid');
+  sg.innerHTML = '';
+  [{k:'tier1_sec', lbl:'Tier 1 Interval (sec)', hint:'StateID poll — recommended 1s'},
+   {k:'tier2_sec', lbl:'Tier 2 Interval (sec)', hint:'Full snapshot — recommended 15s'}
+  ].forEach(f => {
+    const d = document.createElement('div');
+    d.className = 'kv-item';
+    d.innerHTML = `
+      <div class="kv-lbl">${f.lbl}</div>
+      <input type="number" value="${local.scan_intervals[f.k]||1}" min="1"
+        oninput="cfg.local.scan_intervals['${f.k}']=parseInt(this.value)||1">
+      <div class="kv-hint">${f.hint}</div>`;
+    sg.appendChild(d);
+  });
+}
+
+// ===== TAB 6: TIMERS =====
+function renderTimers() {
+  const local = cfg.local || {};
+  if (!cfg.local) cfg.local = {};
+  if (!cfg.local.down_timers) cfg.local.down_timers = {};
+  const dt = cfg.local.down_timers;
+
+  const tg = document.getElementById('timerGrid');
+  tg.innerHTML = '';
+  [{k:'down_confirm_sec', lbl:'Down Confirm (sec)', hint:'Seconds before confirming machine is down', def:20},
+   {k:'recover_confirm_sec', lbl:'Recovery Confirm (sec)', hint:'Seconds before confirming machine has recovered', def:60}
+  ].forEach(f => {
+    const d = document.createElement('div');
+    d.className = 'kv-item';
+    d.innerHTML = `
+      <div class="kv-lbl">${f.lbl}</div>
+      <input type="number" value="${dt[f.k]||f.def}" min="1"
+        oninput="cfg.local.down_timers['${f.k}']=parseInt(this.value)||${f.def}">
+      <div class="kv-hint">${f.hint}</div>`;
+    tg.appendChild(d);
+  });
+
+  const cg = document.getElementById('consecGrid');
+  cg.innerHTML = '';
+  const cd = document.createElement('div');
+  cd.className = 'kv-item';
+  cd.innerHTML = `
+    <div class="kv-lbl">Consecutive Good Parts Target</div>
+    <input type="number" value="${local.consecutive_good_target||10}" min="1"
+      oninput="cfg.local.consecutive_good_target=parseInt(this.value)||10">
+    <div class="kv-hint">Parts between streak log events</div>`;
+  cg.appendChild(cd);
+}
+
+// ===== TAB 7: AUDIT LOG =====
+async function loadAuditLog() {
+  try {
+    const r = await fetch(API + '/api/audit_log');
+    const log = await r.json();
+    const tbody = document.getElementById('auditRows');
+    if (!log.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--dgray)">No changes recorded yet</td></tr>';
+      return;
+    }
+    // Show newest first
+    tbody.innerHTML = [...log].reverse().map((entry, i) => {
+      const changes = (entry.changes || []).slice(0, 8);
+      const more = (entry.changes || []).length - 8;
+      const isRestore = entry.tab === 'restore';
+      return `<tr>
+        <td style="white-space:nowrap;font-family:monospace;font-size:11px">${entry.timestamp?.slice(0,19).replace('T',' ')||'-'}</td>
+        <td style="font-weight:700">${esc(entry.changed_by||'')}</td>
+        <td><span class="badge ${isRestore?'badge-restore':'badge-tab'}">${esc(entry.tab||'')}</span></td>
+        <td>
+          <ul class="change-list">
+            ${changes.map(c => `<li>${esc(c)}</li>`).join('')}
+            ${more > 0 ? `<li><button onclick="this.parentElement.querySelectorAll('.hidden-change').forEach(el=>el.style.display='');this.style.display='none'" style="background:none;border:none;color:var(--gm-blue);cursor:pointer;font-size:11px;font-style:italic;padding:0">...and ${more} more — click to show all</button>${(entry.changes||[]).slice(8).map(c=>`<span class="hidden-change" style="display:none"><br>• ${esc(c)}</span>`).join('')}</li>` : ''}
+          </ul>
+        </td>
+        <td style="font-size:11px;color:var(--dgray)">${esc(entry.comment||'')}</td>
+        <td><button class="btn-sm" onclick="promptRestore('${esc(entry.backup_file||'')}','${entry.timestamp?.slice(0,19).replace('T',' ')||''}')">Restore</button></td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('auditRows').innerHTML =
+      '<tr><td colspan="6" style="color:var(--red);padding:16px">Could not load audit log</td></tr>';
+  }
+}
+
+// ===== SAVE =====
+function promptSave() {
+  document.getElementById('saveDialogChanges').textContent =
+    `Saving changes to tab: ${currentTab}`;
+  document.getElementById('saveDialogUser').value = '';
+  document.getElementById('saveDialogComment').value = '';
+  document.getElementById('saveOverlay').classList.add('show');
+}
+
+function closeSaveDialog() {
+  document.getElementById('saveOverlay').classList.remove('show');
+}
+
+async function confirmSave() {
+  const changedBy = document.getElementById('saveDialogUser').value.trim() || 'admin';
+  const comment = document.getElementById('saveDialogComment').value.trim();
+  closeSaveDialog();
+  const btn = document.querySelector('.save-bar .btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  try {
+    const r = await fetch(API + '/api/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        password: sessionPassword,
+        config: cfg,
+        changed_by: changedBy,
+        comment: comment,
+        tab: currentTab,
+      })
+    });
+    if (!r.ok) throw new Error('Server returned ' + r.status);
+    const data = await r.json();
+    showMsg(`Saved — ${data.changes_detected||0} changes detected`, 'ok');
+  } catch(e) {
+    showMsg('Save failed: ' + e.message, 'err');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Save All Changes';
+}
+
+// ===== RESTORE =====
+function promptRestore(backupFile, timestamp) {
+  if (!backupFile) { alert('No backup file available for this entry.'); return; }
+  pendingRestoreFile = backupFile;
+  document.getElementById('restoreInfo').textContent =
+    `You are about to restore the config from: ${timestamp}. The current config will be backed up first.`;
+  document.getElementById('restoreUser').value = '';
+  document.getElementById('restoreOverlay').classList.add('show');
+}
+
+async function confirmRestore() {
+  const changedBy = document.getElementById('restoreUser').value.trim() || 'admin';
+  document.getElementById('restoreOverlay').classList.remove('show');
+  try {
+    const r = await fetch(API + '/api/config/restore', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        password: sessionPassword,
+        backup_file: pendingRestoreFile,
+        changed_by: changedBy,
+      })
+    });
+    if (!r.ok) throw new Error('Restore failed: ' + r.status);
+    showMsg('Config restored successfully. Reloading...', 'ok');
+    setTimeout(async () => { await loadConfig(); loadAuditLog(); }, 1000);
+  } catch(e) {
+    showMsg('Restore failed: ' + e.message, 'err');
+  }
+}
+
+// ===== HELPERS =====
+function showMsg(text, type) {
+  const el = document.getElementById('saveMsg');
+  el.textContent = text;
+  el.className = 'save-msg ' + type;
+  setTimeout(() => { el.textContent = ''; }, 5000);
+}
+
+function triggerUpload(id) {
+  document.getElementById(id).click();
+}
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+
+
+</script>
+</body>
+</html>

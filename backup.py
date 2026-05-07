@@ -13,6 +13,7 @@ Backup locations:
 
 import json
 import os
+import sqlite3
 import shutil
 import time
 import logging
@@ -104,14 +105,18 @@ def backup_database(area_code):
     backup_path = os.path.join(BACKUP_DIR, backup_name)
     
     try:
-        shutil.copy2(DB_FILE, backup_path)
+        src = sqlite3.connect(DB_FILE)
+        dst = sqlite3.connect(backup_path)
+        src.backup(dst)
+        dst.close()
+        src.close()
         log.info(f"Database backup: {backup_name} ({os.path.getsize(backup_path)} bytes)")
-        
+
         # Copy to secondary drive too
         secondary_dir = get_secondary_dir(area_code)
         if secondary_dir:
             sec_path = os.path.join(secondary_dir, backup_name)
-            shutil.copy2(DB_FILE, sec_path)
+            shutil.copy2(backup_path, sec_path)
             log.info(f"Secondary backup: {sec_path}")
         
         write_status("db_ok")
